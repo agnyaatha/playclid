@@ -1,0 +1,61 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
+import type { Game } from "@/core/game";
+import { usePref } from "@/core/prefs/usePref";
+import { stateAt } from "@/core/sim/playback";
+import type { Body, ShotResult } from "@/core/types";
+import type { SimParams } from "@/core/sim/params";
+import type { PaintFn } from "@/views/paint";
+
+const isSpeed = (v: unknown): v is number => v === 0.5 || v === 1 || v === 2 || v === 4;
+
+/**
+ * Plays a finished ShotResult as an animation. Frames are drawn through `paintRef` straight from the closed-form
+ * motion, so React only re-renders when playback starts or stops.
+ */
+export function useShotPlayer(game: Game, paintRef: MutableRefObject<PaintFn | null>, params?: SimParams) {
+  const displayRef = useRef<Body[] | null>(null);
+  const rafRef = useRef(0);
+  const speedRef = useRef(1);
+  const skipRef = useRef(false);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = usePref<number>("speed", 1, isSpeed);
+
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
+  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
+
+  const play = useCallback(
+    (result: ShotResult, onDone?: () => void) => {
+      cancelAnimationFrame(rafRef.current);
+      skipRef.current = false;
+      setPlaying(true);
+      let t = 0;
+      let last = performance.now();
+      const step = (now: number) => {
+        const simDt = ((now - last) / 1000) * speedRef.current;
+        t += simDt;
+        last = now;
+        if (skipRef.current || t >= result.duration) {
+          displayRef.current = null;
+          setPlaying(false);
+          onDone?.();
+          return;
+        }
+        displayRef.current = stateAt(result, t, (params ?? game.params).cloth);
+        paintRef.current?.(simDt);
+        rafRef.current = requestAnimationFrame(step);
+      };
+      rafRef.current = requestAnimationFrame(step);
+    },
+    [game, paintRef, params],
+  );
+
+  const skip = useCallback(() => {
+    skipRef.current = true;
+  }, []);
+
+  return { displayRef, playing, speed, setSpeed, play, skip };
+}
