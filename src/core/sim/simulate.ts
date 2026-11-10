@@ -139,7 +139,8 @@ export function simulateEvents(table: Table, initial: Body[], defaults: SimParam
         return;
       }
       const dt = firstApproach(circle(pk.position.x, pk.position.y, pk.radius), T);
-      if (dt !== null) offer({ kind: "pocket", at: t + dt, pocket: pk.id });
+      const tooFast = dt !== null && pk.maxSpeed !== undefined && Math.hypot(b.velocity.x + acc.x * dt, b.velocity.y + acc.y * dt) > pk.maxSpeed;
+      if (dt !== null && !tooFast) offer({ kind: "pocket", at: t + dt, pocket: pk.id });
     });
     table.cushions.forEach((c, k) => {
       const dt = firstApproach(line(c.a, normals[k], b.radius), T);

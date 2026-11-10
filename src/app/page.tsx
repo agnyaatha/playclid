@@ -1,12 +1,6 @@
 import Link from "next/link";
-import { GAMES } from "@/games/registry";
+import { FAMILIES, getGame } from "@/games/registry";
 import { HeroTable } from "@/ui/HeroTable";
-
-const BLURB: Record<string, string> = {
-  snooker: "The full game on a true 12 ft table: from stance and straight pots to breaks, safety and escapes.",
-  pool: "8-ball on a 9 ft table: potting angles, cue-ball control and ball in hand.",
-  carrom: "Flick the striker from the baseline and pocket your colour, on a powdered board.",
-};
 
 export default function Home() {
   return (
@@ -23,7 +17,7 @@ export default function Home() {
           </div>
         </div>
         <div className="max-w-xl px-5 pt-14 sm:px-10 lg:pt-24">
-          <p className="eyebrow rise">Snooker · Pool · Carrom</p>
+          <p className="eyebrow rise">Eight table games</p>
           <h1 className="display rise mt-4 text-[3.25rem] font-semibold leading-[0.98] sm:text-7xl" style={{ animationDelay: "80ms" }}>
             Learn the table, one shot at a time.
           </h1>
@@ -33,27 +27,38 @@ export default function Home() {
         </div>
       </section>
 
-      <section aria-label="Games" className="relative border-t border-line bg-ink">
-        <ul className="grid md:grid-cols-3">
-          {Object.entries(GAMES).map(([id, entry], i) => (
-            <li key={id} className={`flex flex-col gap-3 px-5 py-7 sm:px-10 ${i > 0 ? "border-line max-md:border-t md:border-l" : ""}`}>
-              <div className="flex items-baseline justify-between">
-                <h2 className="display text-3xl font-semibold">{id[0].toUpperCase() + id.slice(1)}</h2>
-                <span className="text-xs tabular-nums text-muted">{entry!.lessons.length} lessons</span>
-              </div>
-              <p className="flex-1 text-sm leading-relaxed text-muted">{BLURB[id]}</p>
-              <div className="flex gap-2">
-                <Link href={`/${id}`} className="btn btn-primary">
-                  Start learning
-                </Link>
-                <Link href={`/${id}/practice`} className="btn btn-ghost">
-                  Practice table
-                </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {FAMILIES.map((family) => (
+        <section key={family.title} aria-label={family.title} className="relative border-t border-line bg-ink">
+          <h2 className="eyebrow px-5 pt-6 sm:px-10">{family.title}</h2>
+          <ul className="grid md:grid-cols-3">
+            {family.ids.map((id, i) => {
+              const entry = getGame(id);
+              return (
+                <li key={id} className={`flex flex-col gap-3 px-5 py-6 sm:px-10 ${i > 0 ? "border-line max-md:border-t md:border-l" : ""}`}>
+                  <div className="flex items-baseline justify-between">
+                    <h3 className="display text-3xl font-semibold">{entry.game.name}</h3>
+                    <span className="text-xs tabular-nums text-muted">{entry.lessons.length} lessons</span>
+                  </div>
+                  <p className="flex-1 text-sm leading-relaxed text-muted">{entry.blurb}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Link href={`/${id}`} className="btn btn-primary">
+                      Start learning
+                    </Link>
+                    <Link href={`/${id}/practice`} className="btn btn-ghost">
+                      Practice
+                    </Link>
+                    {entry.challenges.length > 0 && (
+                      <Link href={`/${id}/challenges`} className="btn btn-ghost">
+                        Challenges
+                      </Link>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))}
     </main>
   );
 }

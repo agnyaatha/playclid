@@ -29,6 +29,10 @@ export interface SuccessCriteria {
   pot?: { ball: string; pockets?: string[] };
   /** The striker must finish inside this circle (table coordinates, metres). */
   zone?: { x: number; y: number; radius: number };
+  /** The striker must hit both other balls, touching at least this many cushions before the second. */
+  cannon?: { cushions: number };
+  /** The striker must go in a pocket after hitting another ball (billiards' losing hazard). */
+  inOff?: boolean;
 }
 
 /** A hands-on drill on the simulated table. */

@@ -13,7 +13,83 @@
   --felt: #11734a;
   --good: #66cf98;
   --bad: #ec7f68;
+  --on-accent: #1d1505;
+  --accent-hi: #e3bb65;
+  --glass: rgba(11, 15, 13, 0.88);
+  --glass-soft: rgba(11, 15, 13, 0.72);
+  --glow: rgba(17, 115, 74, 0.16);
+  /* Things that are ivory in every theme: balls, slider thumbs. */
+  --chalk: #f0e9d8;
   --header: 3.25rem;
+}
+
+/* Each theme restates the tokens above; views/appearance.ts holds the matching table materials. */
+[data-theme="tournament"] {
+  --ink: #0a1020;
+  --panel: #121a2e;
+  --raised: #1c2640;
+  --line: rgba(226, 236, 250, 0.14);
+  --ivory: #eaf0fa;
+  --muted: #a3b1c9;
+  --brass: #6cc6ff;
+  --brass-deep: #3a8fcf;
+  --felt: #1c5fa8;
+  --on-accent: #06121f;
+  --accent-hi: #93d6ff;
+  --glass: rgba(10, 16, 32, 0.88);
+  --glass-soft: rgba(10, 16, 32, 0.72);
+  --glow: rgba(28, 95, 168, 0.24);
+}
+[data-theme="mahogany"] {
+  --ink: #170c0c;
+  --panel: #221313;
+  --raised: #2e1b1a;
+  --line: rgba(245, 232, 218, 0.14);
+  --ivory: #f5e8da;
+  --muted: #c3b0a3;
+  --brass: #e0a458;
+  --brass-deep: #b37a35;
+  --felt: #8c1f2e;
+  --on-accent: #241203;
+  --accent-hi: #ecbb7c;
+  --glass: rgba(23, 12, 12, 0.88);
+  --glass-soft: rgba(23, 12, 12, 0.72);
+  --glow: rgba(140, 31, 46, 0.22);
+}
+[data-theme="slate"] {
+  --ink: #101214;
+  --panel: #181b1e;
+  --raised: #22262a;
+  --line: rgba(232, 236, 239, 0.13);
+  --ivory: #e8ecef;
+  --muted: #a3acb4;
+  --brass: #3fd1b6;
+  --brass-deep: #269a85;
+  --felt: #46565f;
+  --on-accent: #04201a;
+  --accent-hi: #6ee0cb;
+  --glass: rgba(16, 18, 20, 0.88);
+  --glass-soft: rgba(16, 18, 20, 0.72);
+  --glow: rgba(63, 209, 182, 0.08);
+}
+[data-theme="daylight"] {
+  --ink: #f4f0e6;
+  --panel: #ffffff;
+  --raised: #ebe5d6;
+  --line: rgba(31, 42, 36, 0.16);
+  --ivory: #1f2a24;
+  --muted: #58645c;
+  --brass: #0e6e47;
+  --brass-deep: #0a5236;
+  --felt: #11734a;
+  --good: #1b8a56;
+  --bad: #c0452f;
+  --on-accent: #ffffff;
+  --accent-hi: #16855a;
+  --glass: rgba(255, 255, 255, 0.92);
+  --glass-soft: rgba(255, 255, 255, 0.8);
+  --glow: rgba(17, 115, 74, 0.1);
+  color-scheme: light;
 }
 
 @theme inline {
@@ -38,7 +114,7 @@ html {
 
 body {
   background:
-    radial-gradient(120% 70% at 75% -10%, rgba(17, 115, 74, 0.16), transparent 60%),
+    radial-gradient(120% 70% at 75% -10%, var(--glow), transparent 60%),
     var(--ink);
   color: var(--ivory);
   font-family: var(--font-body), sans-serif;
@@ -56,9 +132,8 @@ body::after {
 }
 
 .display {
-  font-family: var(--font-display-face), serif;
-  font-optical-sizing: auto;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display-face), sans-serif;
+  letter-spacing: 0.005em;
 }
 
 .eyebrow {
@@ -98,11 +173,11 @@ body::after {
   opacity: 0.4;
 }
 .btn-primary {
-  background: linear-gradient(180deg, #e3bb65, var(--brass));
-  color: #1d1505;
+  background: linear-gradient(180deg, var(--accent-hi), var(--brass));
+  color: var(--on-accent);
 }
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #ecc777, #dcb25a);
+  filter: brightness(1.07);
 }
 .btn-ghost {
   background: var(--raised);
@@ -110,7 +185,7 @@ body::after {
   color: var(--ivory);
 }
 .btn-ghost:hover:not(:disabled) {
-  border-color: rgba(212, 169, 78, 0.6);
+  border-color: color-mix(in srgb, var(--brass) 60%, transparent);
 }
 .btn-quiet {
   color: var(--muted);
@@ -136,8 +211,8 @@ body::after {
   transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }
 .chip[aria-pressed="true"] {
-  background: rgba(212, 169, 78, 0.16);
-  border-color: rgba(212, 169, 78, 0.65);
+  background: color-mix(in srgb, var(--brass) 16%, transparent);
+  border-color: color-mix(in srgb, var(--brass) 65%, transparent);
   color: var(--ivory);
 }
 
@@ -146,7 +221,7 @@ body::after {
   display: inline-flex;
   padding: 3px;
   border-radius: 0.625rem;
-  background: rgba(11, 15, 13, 0.72);
+  background: var(--glass-soft);
   border: 1px solid var(--line);
   backdrop-filter: blur(8px);
 }
@@ -163,7 +238,7 @@ body::after {
 .seg button[aria-pressed="true"],
 .seg button[aria-selected="true"] {
   background: var(--brass);
-  color: #1d1505;
+  color: var(--on-accent);
 }
 
 /* Sliders */
@@ -195,7 +270,7 @@ body::after {
   height: 1.375rem;
   margin-top: -8px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff, var(--ivory) 45%, #bcb29a);
+  background: radial-gradient(circle at 35% 30%, #fff, var(--chalk) 45%, #bcb29a);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
 }
 .range::-moz-range-thumb {
@@ -203,7 +278,7 @@ body::after {
   height: 1.375rem;
   border: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff, var(--ivory) 45%, #bcb29a);
+  background: radial-gradient(circle at 35% 30%, #fff, var(--chalk) 45%, #bcb29a);
 }
 
 .select {
@@ -310,6 +385,369 @@ input[type="checkbox"] {
   animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
+/* Table effects: brief, and never in the way of the next shot. */
+.fx-glow {
+  position: absolute;
+  width: 6rem;
+  height: 6rem;
+  margin: -3rem 0 0 -3rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 169, 78, 0.75), rgba(212, 169, 78, 0) 68%);
+  animation: fx-glow 0.8s ease-out both;
+}
+@keyframes fx-glow {
+  from {
+    opacity: 1;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+}
+.fx-float {
+  position: absolute;
+  font-size: 1.75rem;
+  font-weight: 600;
+  /* Over the cloth, so the same warm gold in every theme. */
+  color: #f5d48a;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  transform: translate(-50%, -50%);
+  animation: fx-float 1.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes fx-float {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20%) scale(0.7);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -80%) scale(1.1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -260%);
+  }
+}
+.fx-toast {
+  position: absolute;
+  top: 24%;
+  left: 50%;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--brass) 55%, transparent);
+  border-radius: 0.875rem;
+  background: var(--glass);
+  backdrop-filter: blur(6px);
+  text-align: center;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: fx-toast 2.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes fx-toast {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px) scale(0.92);
+  }
+  12%,
+  82% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+}
+.fx-verdict {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.3rem 0.8rem;
+  border-width: 1px;
+  border-radius: 999px;
+  background: var(--glass);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transform: translateX(-50%);
+  animation: rise 0.3s ease-out both;
+}
+.fx-confetti {
+  position: absolute;
+  top: -12px;
+  width: 7px;
+  height: 11px;
+  border-radius: 1px;
+  animation: fx-confetti 2s cubic-bezier(0.3, 0.5, 0.6, 1) both;
+}
+@keyframes fx-confetti {
+  to {
+    opacity: 0.2;
+    transform: translate(var(--drift), 110vh) rotate(var(--spin));
+  }
+}
+@keyframes fx-star {
+  from {
+    opacity: 0;
+    transform: scale(2.2) rotate(-25deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fx-star {
+  display: inline-block;
+  animation: fx-star 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+/* Drawers and dialogs, built on the native element so focus and Escape come for free. */
+.sheet {
+  margin: 0 0 0 auto;
+  height: 100dvh;
+  max-height: none;
+  width: min(23rem, 100vw);
+  padding: 0;
+  border-left: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ivory);
+}
+.sheet-centre {
+  margin: auto;
+  height: fit-content;
+  max-height: calc(100dvh - 2rem);
+  width: min(26rem, calc(100vw - 2rem));
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--brass);
+  border-radius: 0.875rem;
+}
+.sheet::backdrop {
+  background: rgba(5, 8, 6, 0.6);
+}
+
+.power-meter {
+  position: absolute;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  width: 6rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--glass);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+.power-track {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--raised);
+}
+.power-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--good), var(--brass) 60%, var(--bad));
+}
+
+.table-banner {
+  position: absolute;
+  top: 2.75rem;
+  left: 50%;
+  z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: min(30rem, calc(100% - 1.5rem));
+  padding: 0.5rem 0.75rem;
+  border-width: 1px;
+  border-radius: 0.75rem;
+  background: var(--glass);
+  backdrop-filter: blur(6px);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  transform: translateX(-50%);
+}
+
+.dots::after {
+  content: "";
+  animation: dots 1.2s steps(4, end) infinite;
+}
+@keyframes dots {
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+}
+
+/* Small round tools floating on the table. */
+.tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.625rem;
+  background: var(--glass-soft);
+  backdrop-filter: blur(8px);
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tool:hover {
+  color: var(--ivory);
+}
+
+/* The first-run tour's little looping tables. */
+.tour-demo {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.tour-sweep {
+  transform-origin: 70px 60px;
+  animation: tour-sweep 2.8s ease-in-out infinite alternate;
+}
+@keyframes tour-sweep {
+  from {
+    transform: rotate(-11deg);
+  }
+  to {
+    transform: rotate(9deg);
+  }
+}
+.tour-pull {
+  animation: tour-pull 2.4s ease-in infinite;
+}
+@keyframes tour-pull {
+  0%,
+  8% {
+    transform: translateX(0);
+  }
+  72% {
+    transform: translateX(-34px);
+  }
+  84%,
+  100% {
+    transform: translateX(0);
+  }
+}
+.tour-meter {
+  transform-origin: 130px 27px;
+  animation: tour-meter 2.4s ease-in infinite;
+}
+@keyframes tour-meter {
+  0%,
+  8% {
+    transform: scaleX(0.04);
+  }
+  72% {
+    transform: scaleX(1);
+  }
+  84%,
+  100% {
+    transform: scaleX(0.04);
+  }
+}
+.tour-cue {
+  animation: tour-cue 3s linear infinite;
+}
+@keyframes tour-cue {
+  0%,
+  12% {
+    transform: translate(0, 0);
+  }
+  40% {
+    transform: translate(124px, 22px);
+  }
+  75%,
+  100% {
+    transform: translate(150px, 8px);
+    opacity: 1;
+  }
+}
+.tour-object {
+  animation: tour-object 3s linear infinite;
+}
+@keyframes tour-object {
+  0%,
+  40% {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  66% {
+    transform: translate(110px, 36px);
+    opacity: 1;
+  }
+  68%,
+  100% {
+    transform: translate(110px, 36px);
+    opacity: 0;
+  }
+}
+.tour-pocket {
+  opacity: 0;
+  transform-origin: 306px 106px;
+  animation: tour-pocket 3s ease-out infinite;
+}
+@keyframes tour-pocket {
+  0%,
+  64% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  70% {
+    opacity: 0.85;
+  }
+  92%,
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* On a phone the table is short, so the floating controls have to be small. */
+@media (max-width: 1023px) {
+  .table-box .tool {
+    width: 2rem;
+    height: 2rem;
+  }
+  .table-box .seg {
+    padding: 2px;
+  }
+  .table-box .seg button {
+    min-height: 1.625rem;
+    padding: 0 0.5rem;
+    font-size: 0.6875rem;
+  }
+}
+
+kbd {
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 0.3rem;
+  background: var(--raised);
+  font-family: inherit;
+  font-size: 0.75rem;
+}
+
 :focus-visible {
   outline: 2px solid var(--brass);
   outline-offset: 2px;
@@ -323,5 +761,11 @@ input[type="checkbox"] {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  /* These carry information, so they stay on screen instead of finishing at once. */
+  .fx-toast,
+  .fx-star,
+  .fx-verdict {
+    animation: none !important;
   }
 }

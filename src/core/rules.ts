@@ -24,6 +24,10 @@ export interface Scoreboard {
   over: boolean;
   /** Result line once the frame is over. */
   result?: string;
+  /** Points still on the table, where the game counts them. */
+  remaining?: number;
+  /** A situation worth flagging, e.g. that a player now needs snookers. */
+  warning?: string;
 }
 
 /** A game's rulebook: turns finished shots into scores, fouls and the next position. */

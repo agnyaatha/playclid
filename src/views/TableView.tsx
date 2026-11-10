@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, type ComponentProps, type CSSProperties } from "react";
+import { useCallback, type ComponentProps, type CSSProperties, type ReactNode } from "react";
 import { usePref } from "@/core/prefs/usePref";
 import { Segmented } from "@/ui/kit";
 import type { CameraMode } from "./3d/camera";
@@ -15,10 +15,14 @@ const isCamera = (v: unknown): v is CameraMode => v === "auto" || v === "pov" ||
 interface Props extends ComponentProps<typeof TableCanvas> {
   /** Change of aim in radians from dragging in the 3D behind-the-ball view. */
   onAimDelta?: (radians: number) => void;
+  /** Effects and banners, laid over the table. */
+  children?: ReactNode;
+  /** Buttons floating on the table's far corner. */
+  tools?: ReactNode;
 }
 
 /** The table in 2D or 3D, with its view controls floating over it. Either view takes the same props. */
-export function TableView({ onAimDelta, ...props }: Props) {
+export function TableView({ onAimDelta, children, tools, ...props }: Props) {
   const [view, setView] = usePref<ViewMode>("view", "2d", isView);
   const [camera, setCamera] = usePref<CameraMode>("camera", "auto", isCamera);
   const fallBack = useCallback(() => setView("2d"), [setView]);
@@ -28,7 +32,10 @@ export function TableView({ onAimDelta, ...props }: Props) {
   return (
     <div className="table-box" style={{ "--table-aspect": aspect } as CSSProperties}>
       {view === "2d" ? <TableCanvas {...props} /> : <TableCanvas3D {...props} cameraMode={camera} onAimDelta={onAimDelta} onUnavailable={fallBack} />}
-      <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-wrap items-center gap-2">
+      {children}
+      {tools && <div className={`absolute z-20 flex gap-1.5 ${view === "2d" ? "right-[11%] top-0.5" : "right-2 top-2"}`}>{tools}</div>}
+      {/* In 2D the corner holds a pocket, so the controls sit along the top rail instead. */}
+      <div className={`pointer-events-none absolute z-10 flex flex-wrap items-center gap-2 ${view === "2d" ? "left-[11%] top-0.5" : "left-2 top-2"}`}>
         <div className="pointer-events-auto">
           <Segmented
             label="View"

@@ -5,6 +5,7 @@ import type { GameId } from "@/core/game";
 import { computeStats } from "@/core/lessons/stats";
 import { useProgress } from "@/core/progress/useProgress";
 import { getGame } from "@/games/registry";
+import { ActivityCard } from "../ActivityCard";
 import { Stars } from "../kit";
 import { lessonHref } from "./lessonNav";
 
@@ -26,18 +27,22 @@ export function StatsView({ gameId }: { gameId: GameId }) {
 
   if (overall.plays === 0) {
     return (
-      <p className="panel p-6 text-muted">
-        No drill results yet. Play a table drill from the{" "}
-        <Link href={`/${gameId}`} className="text-ivory underline">
-          curriculum
-        </Link>{" "}
-        and your numbers will appear here.
-      </p>
+      <div className="flex flex-col gap-8">
+        <ActivityCard showBadges />
+        <p className="panel p-6 text-muted">
+          No drill results yet. Play a table drill from the{" "}
+          <Link href={`/${gameId}`} className="text-ivory underline">
+            curriculum
+          </Link>{" "}
+          and your numbers will appear here.
+        </p>
+      </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-8">
+      <ActivityCard showBadges />
       <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3" aria-label="Overall">
         <Stat label="With aids" value={pct(overall.aidedRate)} />
         <Stat label="No aids" value={pct(overall.unaidedRate)} />

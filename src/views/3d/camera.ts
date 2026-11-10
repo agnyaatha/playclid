@@ -26,14 +26,21 @@ export function topPose(aspect: number, table: Table, margin = 0.22): Pose {
   };
 }
 
+/** A long cue table is seen low along the line of aim. */
+const CUE_VIEW = { back: 0.8, height: 0.52, ahead: 0.95 };
+/** A square board is seen whole from over the player's shoulder, in multiples of its side. */
+const BOARD_VIEW = { back: 0.66, height: 0.8, ahead: 0.36 };
+/** The narrowest view at which the board's near corners fit without moving the camera back. */
+const BOARD_ASPECT = 1.7;
+
 /** Eye behind the striker on the aim line, a little above the cloth, looking down the line of aim. */
-export function povPose(striker: { x: number; y: number }, aim: number, scale = 1): Pose {
+export function povPose(striker: { x: number; y: number }, aim: number, scale = 1, view = CUE_VIEW): Pose {
   const [dx, dz] = aimDirection(aim);
   const sx = striker.y;
   const sz = striker.x;
-  const back = 0.8 * scale;
-  const height = 0.52 * scale;
-  const ahead = 0.95 * scale;
+  const back = view.back * scale;
+  const height = view.height * scale;
+  const ahead = view.ahead * scale;
   return {
     position: [sx - dx * back, height, sz - dz * back],
     target: [sx + dx * ahead, 0.02, sz + dz * ahead],
@@ -52,8 +59,9 @@ export function poseFor(
   frame = 0.2,
 ): Pose {
   const top = mode === "top" || (mode === "auto" && playing) || !striker;
-  // Scale the behind-the-ball view to the table, so a small carrom board is framed as well as a 12 ft table.
-  return top ? topPose(aspect, table, frame + 0.02) : povPose(striker!, aim, Math.min(1, Math.max(table.width, table.length) / 2.6));
+  if (top) return topPose(aspect, table, frame + 0.02);
+  if (table.width === table.length) return povPose(striker!, aim, table.length * Math.max(1, BOARD_ASPECT / aspect), BOARD_VIEW);
+  return povPose(striker!, aim, Math.min(1, Math.max(table.width, table.length) / 2.6));
 }
 
 const mix = (a: number, b: number, k: number) => a + (b - a) * k;

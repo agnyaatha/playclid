@@ -199,9 +199,28 @@ describe("foul side effects on the phase", () => {
     expect(o.state).toMatchObject({ phase: "clearance", nextColour: 0 });
   });
 
-  it("potting the last red in a foul gives the opponent a colour", () => {
+  it("potting the last red in a foul starts the clearance on the yellow", () => {
     const o = judgeShot(state({ redsLeft: 1 }), shot("blue", "red1"));
-    expect(o.state).toMatchObject({ redsLeft: 0, phase: "colour" });
+    expect(o.state).toMatchObject({ redsLeft: 0, phase: "clearance", nextColour: 0 });
+  });
+});
+
+describe("points remaining and snookers", () => {
+  it("counts 147 at the start of a frame and 27 for the colours", () => {
+    expect(snookerRules.scoreboard(newFrame()).remaining).toBe(147);
+    expect(snookerRules.scoreboard(state({ phase: "clearance", redsLeft: 0, nextColour: 0 })).remaining).toBe(27);
+    expect(snookerRules.scoreboard(state({ phase: "clearance", redsLeft: 0, nextColour: 5 })).remaining).toBe(7);
+  });
+
+  it("adds the black that is available after a red", () => {
+    expect(snookerRules.scoreboard(state({ phase: "colour", redsLeft: 1 })).remaining).toBe(8 + 27 + 7);
+  });
+
+  it("flags the trailing player once the deficit is more than what is left", () => {
+    const close = state({ phase: "clearance", redsLeft: 0, nextColour: 4, scores: [40, 28] });
+    expect(snookerRules.scoreboard(close).warning).toBeUndefined();
+    const far = state({ phase: "clearance", redsLeft: 0, nextColour: 4, scores: [40, 20] });
+    expect(snookerRules.scoreboard(far).warning).toBe("Player 2 needs snookers");
   });
 });
 

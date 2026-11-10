@@ -178,7 +178,9 @@ export function judgeShot(prev: FrameState, report: ShotReport, nominated: strin
         s.nextColour = 0;
       }
     } else if (s.phase === "red" && s.redsLeft <= 0) {
-      s.phase = "colour";
+      // The last red went down in a foul, so no colour is earned: the clearance starts on the yellow.
+      s.phase = "clearance";
+      s.nextColour = 0;
     }
     s.whiteInHand = whitePotted;
     // A miss: no ball on was hit (the cue ball hit nothing, or hit a ball that was not on).
@@ -186,11 +188,13 @@ export function judgeShot(prev: FrameState, report: ShotReport, nominated: strin
     return { state: s, foul: true, points, respot, restore, whiteInHand: whitePotted, message };
   }
 
-  // A free ball potted counts as the ball on, but the free ball itself goes back on the table.
-  if (freePotted && free) {
-    const pts = s.phase === "red" ? 1 : s.phase === "colour" ? ballValue(free) : ballValue(COLOUR_ORDER[s.nextColour]);
+  // A free ball potted counts as the ball on, but the free ball itself goes back on the table. Reds potted with it
+  // also score and stay down; a colour on potted with it scores alone, in the clearance below.
+  if (freePotted && free && !legalColour) {
+    const pts = s.phase === "red" ? 1 + legalReds : s.phase === "colour" ? ballValue(free) : ballValue(COLOUR_ORDER[s.nextColour]);
     s.scores[s.current] += pts;
     s.breakPoints += pts;
+    s.redsLeft -= legalReds;
     if (s.phase === "red") s.phase = "colour";
     else if (s.phase === "colour") {
       if (s.redsLeft > 0) s.phase = "red";
@@ -273,7 +277,7 @@ export function judgeShot(prev: FrameState, report: ShotReport, nominated: strin
         state: s,
         foul: false,
         points: pts,
-        respot: [],
+        respot: freePotted && free ? [free] : [],
         whiteInHand: false,
         message: `${nameOf(legalColour)} potted (+${pts}). ${COLOUR_ORDER[s.nextColour]} on.`,
       };
@@ -373,6 +377,15 @@ export function applyOutcome(table: Table, final: Body[], outcome: RulesOutcome,
   return bodies;
 }
 
+/** The most points still available: every red with a black, then the colours. */
+export function pointsRemaining(s: FrameState): number {
+  if (s.frameOver) return 0;
+  if (s.blackDecider) return 7;
+  const colours = COLOUR_ORDER.slice(s.phase === "clearance" ? s.nextColour : 0).reduce((sum, c) => sum + VALUES[c], 0);
+  if (s.phase === "clearance") return colours;
+  return s.redsLeft * 8 + colours + (s.phase === "colour" ? 7 : 0);
+}
+
 function describeOn(s: FrameState): string {
   if (s.blackDecider) return "Black (decider)";
   if (s.phase === "red") return "Red";
@@ -410,7 +423,11 @@ export const snookerRules: RulesEngine = {
   },
   scoreboard(state: RulesState): Scoreboard {
     const s = state as FrameState;
+    const remaining = pointsRemaining(s);
+    const behind: 0 | 1 = s.scores[0] < s.scores[1] ? 0 : 1;
     return {
+      remaining,
+      warning: !s.frameOver && Math.abs(s.scores[0] - s.scores[1]) > remaining ? `${player(behind)} needs snookers` : undefined,
       players: [
         { label: "Player 1", score: s.scores[0] },
         { label: "Player 2", score: s.scores[1] },
@@ -442,7 +459,8 @@ export const snookerRules: RulesEngine = {
   },
   nominations(state, bodies) {
     const s = state as FrameState;
-    if (s.freeBall) return bodies.filter((b) => b.state !== "pocketed" && b.id !== WHITE).map((b) => b.id);
+    // With reds on, a red is simply the ball on, so the free ball has to be a colour.
+    if (s.freeBall) return bodies.filter((b) => b.state !== "pocketed" && b.id !== WHITE && !(s.phase === "red" && isRed(b.id))).map((b) => b.id);
     if (s.phase !== "colour" || s.blackDecider) return null;
     return COLOUR_ORDER.filter((c) => bodies.some((b) => b.id === c && b.state !== "pocketed"));
   },

@@ -3,7 +3,7 @@ import type { SimOptions } from "./sim/simulate";
 import type { SimParams } from "./sim/params";
 import type { Body, ShotInput, ShotResult, Table } from "./types";
 
-export type GameId = "snooker" | "pool" | "carrom";
+export type GameId = "snooker" | "billiards" | "threecushion" | "pool" | "nineball" | "carrom" | "crokinole" | "shuffleboard";
 
 /** What the player controls before a shot, as the shared UI sees it. */
 export interface ControlState {
@@ -51,6 +51,10 @@ export interface Game {
   simulate(table: Table, bodies: Body[], shot: ShotInput, opts?: SimOptions): ShotResult;
   /** Bodies to continue from after a shot (e.g. respot a potted cue ball). Defaults to the final state. */
   afterShot?(result: ShotResult, table: Table): { bodies: Body[]; note?: string };
+  /** The object of the game is not pocketing balls, so the potting coach and its shot verdicts do not apply. */
+  noPotting?: boolean;
+  /** Put the striker where the next shot starts, for games where it always comes back (carrom's baseline). */
+  resetStriker?(bodies: Body[]): Body[];
   /** The rulebook, when the game has one. Free practice runs without it. */
   rules?: RulesEngine;
 }

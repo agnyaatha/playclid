@@ -2,10 +2,22 @@
 
 import { useCallback, useEffect, useRef, type MutableRefObject, type RefObject } from "react";
 import type { Body, Table } from "@/core/types";
+import type { Project } from "@/ui/fx/bus";
 import type { PaintFn } from "../paint";
 import { drawScene, renderTableLayer, type Marker, type Scene } from "./draw";
-import { fitViewport, toTable, type Viewport } from "./geometry";
+import { fitViewport, toScreen, toTable, type Viewport } from "./geometry";
 import type { GameTheme } from "./theme";
+
+export interface PullHandlers {
+  /** A press on the table; true if it grabbed the striker. `tolerance` is the grab distance in metres, `screen` the press in pixels. */
+  start: (p: { x: number; y: number }, tolerance: number, screen: { x: number; y: number }) => boolean;
+  /** The pointer's position on the table, in views where it can reach behind the striker. */
+  move: (p: { x: number; y: number }) => void;
+  /** Power directly, from 0 to 1, for the behind-the-ball view where the pointer cannot get behind the striker. */
+  power: (k: number) => void;
+  /** The pointer let go, or was cancelled when `fire` is false. True if the shot should be played. */
+  end: (fire: boolean) => boolean;
+}
 
 interface Props {
   table: Table;
@@ -20,16 +32,24 @@ interface Props {
   markers?: Marker[];
   /** The player drags to aim: receives the pointer position in table coordinates. */
   onPoint?: (p: { x: number; y: number }) => void;
+  /** Grab the striker and pull back to aim and set the power; let go to shoot. */
+  pull?: PullHandlers;
+  onPullShoot?: () => void;
   /** Filled with a function that repaints immediately, so animation can bypass React rendering. */
   paintRef: MutableRefObject<PaintFn | null>;
+  /** Filled with a function that turns a table position into pixels in this view. */
+  projectRef?: MutableRefObject<Project | null>;
   label: string;
 }
+
+/** How close to the striker a press counts as grabbing it, in pixels: a comfortable fingertip. */
+const GRAB_PX = 26;
 
 /** How many striker positions the playback trail keeps. */
 const TRAIL = 60;
 
 /** Game-agnostic 2D table view. All per-frame drawing happens through `paintRef`, never through React state. */
-export function TableCanvas({ table, theme, strikerId, bodies, displayRef, aiming, markers, onPoint, paintRef, label }: Props) {
+export function TableCanvas({ table, theme, strikerId, bodies, displayRef, aiming, markers, onPoint, pull, onPullShoot, paintRef, projectRef, label }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const stage = useRef<{ w: number; h: number; dpr: number; vp: Viewport; layer: HTMLCanvasElement } | null>(null);
@@ -70,6 +90,14 @@ export function TableCanvas({ table, theme, strikerId, bodies, displayRef, aimin
   }, [paint, paintRef]);
 
   useEffect(() => {
+    if (!projectRef) return;
+    projectRef.current = (p) => (stage.current ? toScreen(stage.current.vp, p) : null);
+    return () => {
+      projectRef.current = null;
+    };
+  }, [projectRef]);
+
+  useEffect(() => {
     latest.current = { bodies, aiming, markers };
     paint();
   }, [bodies, aiming, markers, paint]);
@@ -95,11 +123,17 @@ export function TableCanvas({ table, theme, strikerId, bodies, displayRef, aimin
     return () => ro.disconnect();
   }, [paint, table, theme]);
 
-  const point = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const pointer = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const vp = stage.current?.vp;
-    if (!vp || !onPoint) return;
+    if (!vp) return null;
     const r = e.currentTarget.getBoundingClientRect();
-    onPoint(toTable(vp, e.clientX - r.left, e.clientY - r.top));
+    return toTable(vp, e.clientX - r.left, e.clientY - r.top);
+  };
+  const pulling = useRef(false);
+  const release = (fire: boolean) => {
+    if (!pulling.current) return;
+    pulling.current = false;
+    if (pull?.end(fire)) onPullShoot?.();
   };
 
   return (
@@ -111,11 +145,21 @@ export function TableCanvas({ table, theme, strikerId, bodies, displayRef, aimin
         aria-label={label}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId);
-          point(e);
+          const p = pointer(e);
+          if (!p) return;
+          const r = e.currentTarget.getBoundingClientRect();
+          if (pull?.start(p, GRAB_PX / stage.current!.vp.scale, { x: e.clientX - r.left, y: e.clientY - r.top })) pulling.current = true;
+          else onPoint?.(p);
         }}
         onPointerMove={(e) => {
-          if (e.buttons) point(e);
+          if (!e.buttons) return;
+          const p = pointer(e);
+          if (!p) return;
+          if (pulling.current) pull?.move(p);
+          else onPoint?.(p);
         }}
+        onPointerUp={() => release(true)}
+        onPointerCancel={() => release(false)}
       />
     </div>
   );

@@ -16,10 +16,14 @@ export interface TableSurface {
 /** Everything the renderers need to know about how one game looks. */
 export interface GameTheme {
   surface: TableSurface;
+  /** The 3D room behind the table, top to bottom. */
+  room?: [string, string, string];
   /** Metres of rail around the playing area, including the cushion band. */
   frame: number;
   /** Metres of cushion between the cloth and the rail. */
   band: number;
+  /** Colour inside the rail behind the cushions, where it is not simply dark pocket. */
+  opening?: string;
   /** Balls are spheres; carrom coins are flat discs. */
   shape: "sphere" | "disc";
   ballColour(id: string): string;

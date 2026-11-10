@@ -29,8 +29,8 @@ function canSeeFullBall(white: Body, target: Body, others: Body[]): boolean {
 }
 
 /**
- * A player is snookered when the cue ball cannot hit the full extent of any ball on, because other balls are in
- * the way. After a foul, a snookered incoming player gets a free ball.
+ * A player is snookered when the cue ball cannot hit the full extent of any ball on, because balls that are not on
+ * are in the way: another ball on is never an obstruction. After a foul, a snookered incoming player gets a free ball.
  */
 export function isSnookered(bodies: Body[], onIds: string[]): boolean {
   const white = bodies.find((b) => b.id === "white" && b.state !== "pocketed");
@@ -38,5 +38,6 @@ export function isSnookered(bodies: Body[], onIds: string[]): boolean {
   const live = bodies.filter((b) => b.state !== "pocketed" && b.id !== "white");
   const targets = live.filter((b) => onIds.includes(b.id));
   if (targets.length === 0) return false;
-  return targets.every((t) => !canSeeFullBall(white, t, live.filter((o) => o.id !== t.id)));
+  const blockers = live.filter((b) => !onIds.includes(b.id));
+  return targets.every((t) => !canSeeFullBall(white, t, blockers));
 }

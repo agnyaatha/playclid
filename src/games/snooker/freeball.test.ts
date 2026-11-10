@@ -35,6 +35,12 @@ describe("snookered", () => {
     expect(isSnookered([white, target, visible, ball("blue", 0.9, 1.5)], ["red1", "red2"])).toBe(false);
   });
 
+  it("is false when only other balls on are in the way, as with a tight pack of reds", () => {
+    expect(isSnookered([white, target, ball("red2", 0.9, 1.5)], ["red1", "red2"])).toBe(false);
+    const touching = [ball("red2", 0.87, 3.0), ball("red3", 0.93, 3.0)];
+    expect(isSnookered([white, target, ...touching], ["red1", "red2", "red3"])).toBe(false);
+  });
+
   it("is false when nothing is on or the white is off the table", () => {
     expect(isSnookered([white, target], [])).toBe(false);
     expect(isSnookered([{ ...white, state: "pocketed" }, target], ["red1"])).toBe(false);
@@ -65,6 +71,28 @@ describe("free ball", () => {
 
   it("still allows hitting the real ball on", () => {
     expect(judgeShot(freeState, shot("red1"), "blue").foul).toBe(false);
+  });
+
+  it("scores a red potted with the free ball, keeping the red down and the count right", () => {
+    const o = judgeShot(freeState, shot("blue", "blue", "red4"), "blue");
+    expect(o.foul).toBe(false);
+    expect(o.points).toBe(2);
+    expect(o.state).toMatchObject({ scores: [2, 0], redsLeft: 14, phase: "colour" });
+    expect(o.respot).toEqual(["blue"]);
+    expect(o.restore).toBeUndefined();
+  });
+
+  it("in the clearance, scores only the ball on when the free ball goes down with it", () => {
+    const clearance = state({ phase: "clearance", redsLeft: 0, nextColour: 0, freeBall: true });
+    const o = judgeShot(clearance, shot("black", "black", "yellow"), "black");
+    expect(o.foul).toBe(false);
+    expect(o.state).toMatchObject({ scores: [2, 0], nextColour: 1 });
+    expect(o.respot).toEqual(["black"]);
+  });
+
+  it("offers only colours to nominate while reds are on", () => {
+    const bodies = [ball("white", 0.9, 0.5), ball("red1", 0.9, 3.0), ball("blue", 0.9, 1.5)];
+    expect(snookerRules.nominations!(freeState, bodies)).toEqual(["blue"]);
   });
 
   it("is used up after the shot", () => {

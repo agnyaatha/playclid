@@ -28,6 +28,12 @@ export interface Pocket {
    * the table side; otherwise it is potted on entering the circle of `radius` around `position`.
    */
   mouth?: { a: Vec3; b: Vec3 };
+  /** A ball faster than this skims straight over (m/s). Only for pockets without a mouth. */
+  maxSpeed?: number;
+  /** How large to draw it, when that differs from the size that catches a ball. */
+  drawRadius?: number;
+  /** Drawn by the game's own markings, so the table views leave it alone (a drop-off along an edge). */
+  unmarked?: boolean;
 }
 
 /** A straight cushion segment from a to b. */
@@ -35,6 +41,8 @@ export interface CushionSegment {
   id: string;
   a: Vec3;
   b: Vec3;
+  /** Set where this cushion runs on into the next instead of ending at a pocket: metres the back edge reaches past each end. */
+  mitre?: number;
 }
 
 export interface Table {

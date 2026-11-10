@@ -5,6 +5,7 @@ import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import type { Body, Table } from "@/core/types";
 import type { Marker, Scene } from "../2d/draw";
+import { visibleMarks, type AngleMark, type Point } from "../2d/prediction";
 import type { GameTheme } from "../2d/theme";
 import { BallFactory, buildTable, type BallObject } from "./build";
 import { FOV, lerpPose, poseDistance, poseFor, type CameraMode, type Pose } from "./camera";
@@ -18,6 +19,10 @@ export interface OverlayInput {
 
 const GOLD = 0xd4a94e;
 const IVORY = 0xf0e9d8;
+/** On-screen height of an angle readout. */
+const LABEL_PX = 20;
+/** Cut angles run to a tenth of a degree, so readouts are cached only up to a limit. */
+const MAX_LABEL_TEXTURES = 300;
 
 const disposeObject = (root: THREE.Object3D) =>
   root.traverse((o) => {
@@ -48,6 +53,9 @@ export class Scene3D {
   private ghost: THREE.Mesh;
   private lineMaterials: LineMaterial[] = [];
   private lines: { aim: Line2; hit: Line2; cue: Line2 };
+  private markLines: THREE.LineSegments;
+  private labels: THREE.Sprite[] = [];
+  private labelTextures = new Map<string, { texture: THREE.Texture; aspect: number }>();
   private env: THREE.Texture;
   private input: OverlayInput = { cameraMode: "auto" };
   private latestBodies: Body[] = [];
@@ -118,6 +126,10 @@ export class Scene3D {
       hit: this.makeLine(GOLD, 2.5),
       cue: this.makeLine(IVORY, 2),
     };
+    this.markLines = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: 0.9, depthTest: false }));
+    this.markLines.frustumCulled = false;
+    this.markLines.renderOrder = 5;
+    this.aimGroup.add(this.markLines);
   }
 
   /** A dim warm falloff behind the table, so the room reads as a space and not as a void. */
@@ -128,9 +140,10 @@ export class Scene3D {
     const ctx = c.getContext("2d");
     if (!ctx) return null;
     const g = ctx.createLinearGradient(0, 0, 0, 256);
-    g.addColorStop(0, "#080b09");
-    g.addColorStop(0.55, "#13201a");
-    g.addColorStop(1, "#1c2a22");
+    const [top, middle, bottom] = this.theme.room ?? ["#080b09", "#13201a", "#1c2a22"];
+    g.addColorStop(0, top);
+    g.addColorStop(0.55, middle);
+    g.addColorStop(1, bottom);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 16, 256);
     const tex = new THREE.CanvasTexture(c);
@@ -256,20 +269,70 @@ export class Scene3D {
       this.ghost.scale.set(R, this.theme.shape === "disc" ? 0.004 : R, R);
     }
 
-    const ray = (from: { x: number; y: number } | undefined, v: { x: number; y: number } | null | undefined) => {
-      if (!from || !v) return null;
-      const speed = Math.hypot(v.x, v.y);
-      if (speed < 1e-6) return null;
-      const len = Math.min(0.9, Math.max(0.15, speed * 0.3)) * Math.min(1, this.table.width / 1.2);
-      return [
-        [from.y, y, from.x],
-        [from.y + (v.y / speed) * len, y, from.x + (v.x / speed) * len],
-      ] as [number, number, number][];
-    };
-    const show = pr?.ghost && aids.prediction;
-    const hit = pr?.hitId ? this.latestBodies.find((b) => b.id === pr.hitId) : undefined;
-    this.setLine(this.lines.hit, show ? ray(hit?.position, pr?.hitVelocity) : null);
-    this.setLine(this.lines.cue, show ? ray(pr?.ghost ?? undefined, pr?.cueVelocity) : null);
+    const lift = (path: Point[] | null | undefined) => path?.map((p) => [p.y, y, p.x] as [number, number, number]) ?? null;
+    this.setLine(this.lines.hit, aids.prediction ? lift(pr?.hitPath) : null);
+    this.setLine(this.lines.cue, aids.prediction ? lift(pr?.cuePath) : null);
+    this.setMarks(visibleMarks(pr, aids), y);
+  }
+
+  /** Draw the angle arcs as one batch of segments, and reuse a label sprite for each readout. */
+  private setMarks(marks: AngleMark[], y: number) {
+    const positions: number[] = [];
+    for (const m of marks) {
+      for (const line of m.lines) {
+        for (let i = 1; i < line.length; i++) positions.push(line[i - 1].y, y, line[i - 1].x, line[i].y, y, line[i].x);
+      }
+    }
+    this.markLines.geometry.dispose();
+    this.markLines.geometry = new THREE.BufferGeometry().setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+
+    const worldHeight = (LABEL_PX / this.height) * 2 * Math.tan((FOV * Math.PI) / 360);
+    marks.forEach((m, i) => {
+      let sprite = this.labels[i];
+      if (!sprite) {
+        sprite = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false, sizeAttenuation: false, toneMapped: false }));
+        sprite.renderOrder = 6;
+        this.labels.push(sprite);
+        this.aimGroup.add(sprite);
+      }
+      const { texture, aspect } = this.labelTexture(m.label);
+      sprite.material.map = texture;
+      sprite.material.needsUpdate = true;
+      sprite.position.set(m.labelAt.y, y, m.labelAt.x);
+      sprite.scale.set(worldHeight * aspect, worldHeight, 1);
+      sprite.visible = true;
+    });
+    for (let i = marks.length; i < this.labels.length; i++) this.labels[i].visible = false;
+  }
+
+  private labelTexture(text: string) {
+    let entry = this.labelTextures.get(text);
+    if (entry) return entry;
+    if (this.labelTextures.size >= MAX_LABEL_TEXTURES) {
+      this.labelTextures.forEach((l) => l.texture.dispose());
+      this.labelTextures.clear();
+    }
+    const c = document.createElement("canvas");
+    const ctx = c.getContext("2d")!;
+    const font = `600 32px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.font = font;
+    c.width = Math.ceil(ctx.measureText(text).width) + 28;
+    c.height = 50;
+    // Sizing the canvas resets its context.
+    ctx.font = font;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(10,13,11,0.85)";
+    ctx.beginPath();
+    ctx.roundRect(0, 0, c.width, c.height, 10);
+    ctx.fill();
+    ctx.fillStyle = "#f0e9d8";
+    ctx.fillText(text, c.width / 2, c.height / 2 + 1);
+    const texture = new THREE.CanvasTexture(c);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    entry = { texture, aspect: c.width / c.height };
+    this.labelTextures.set(text, entry);
+    return entry;
   }
 
   /** Bring ball meshes in line with the bodies, spinning each by its angular velocity over `simDt` seconds. */
@@ -303,6 +366,8 @@ export class Scene3D {
       }
       obj.mesh.quaternion.copy(this.orientation.get(b.id)!);
     }
+    // Pucks and discs come and go between rounds, so anything no longer in play must disappear too.
+    for (const [id, obj] of this.balls) if (!bodies.some((b) => b.id === id)) obj.group.visible = false;
   }
 
   private syncCue() {
@@ -379,6 +444,12 @@ export class Scene3D {
   }
 
   /** Where a pointer is on the table, in table coordinates, or null if it misses. */
+  /** A point on the cloth in pixels inside the canvas. */
+  project(p: { x: number; y: number }): { x: number; y: number } | null {
+    const v = new THREE.Vector3(p.y, 0, p.x).project(this.camera);
+    return { x: ((v.x + 1) / 2) * this.width, y: ((1 - v.y) / 2) * this.height };
+  }
+
   pick(clientX: number, clientY: number): { x: number; y: number } | null {
     const r = this.canvas.getBoundingClientRect();
     const ndc = new THREE.Vector2(((clientX - r.left) / r.width) * 2 - 1, -(((clientY - r.top) / r.height) * 2 - 1));
@@ -395,6 +466,7 @@ export class Scene3D {
     this.factory.dispose();
     this.env.dispose();
     this.lineMaterials.forEach((m) => m.dispose());
+    this.labelTextures.forEach((l) => l.texture.dispose());
     this.renderer.dispose();
   }
 }

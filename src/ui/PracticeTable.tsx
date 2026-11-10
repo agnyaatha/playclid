@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { perturb, SKILLS, type SkillName } from "@/core/ai/advisor";
 import { makeRng } from "@/core/ai/rng";
 import type { ControlState, GameId } from "@/core/game";
+import { recordShot, summariseSession, type ShotRecord } from "@/core/lessons/insight";
 import { prefsStore } from "@/core/prefs/store";
 import { usePref } from "@/core/prefs/usePref";
 import type { RulesState } from "@/core/rules";
@@ -11,15 +12,21 @@ import type { Body, ShotResult } from "@/core/types";
 import { TableView } from "@/views/TableView";
 import { PlaybackControls } from "./controls/PlaybackControls";
 import { ShotControls } from "./controls/ShotControls";
-import { Callout, Field, Segmented, Slider, Toggle } from "./kit";
+import { tableFx } from "./fx/bus";
+import { sound } from "./fx/sound";
+import { Field, Segmented, Sheet, Toggle } from "./kit";
 import { Scoreboard } from "./Scoreboard";
+import { SessionPanel } from "./SessionPanel";
+import { TableBanner, TableOverlay } from "./TableOverlay";
+import { TableTools } from "./TableTools";
 import { useAdvisor } from "./useAdvisor";
-import { CLOTH_SCALE_MAX, CLOTH_SCALE_MIN } from "./useSimParams";
 import { tableKeys, useTableSession } from "./useTableSession";
 
 const isSkill = (v: unknown): v is SkillName => typeof v === "string" && v in SKILLS;
 const SKILL_LABEL: Record<SkillName, string> = { beginner: "Beginner", club: "Club", expert: "Expert" };
 type Tab = "shot" | "coach" | "table";
+/** How long the computer's chosen line stays on screen before it plays. */
+const COMPUTER_AIM_MS = 900;
 
 function summarise(r: ShotResult, strikerId: string): string {
   const first = r.events.find((e) => e.type === "collision");
@@ -39,11 +46,17 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
   const [nominated, setNominated] = useState<string | null>(null);
   const [history, setHistory] = useState<Snapshot[]>([]);
   const [lastResult, setLastResult] = useState<ShotResult | null>(null);
-  const [message, setMessage] = useState("Drag on the table to aim, set power and spin, then shoot.");
+  const [message, setMessage] = useState("Drag on the table to aim, set the power, then shoot.");
   const [skill, setSkill] = usePref<SkillName>("skill", "club", isSkill);
   const [opponent, setOpponent] = useState(false);
   const [thinking, setThinking] = useState(false);
   const [tab, setTab] = useState<Tab>("shot");
+  const [log, setLog] = useState<ShotRecord[]>([]);
+  const [summaryClosed, setSummaryClosed] = useState(false);
+  const [foul, setFoul] = useState<string | null>(null);
+  const [bannerHidden, setBannerHidden] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const addRecord = (r: ShotRecord) => setLog((l) => [...l, r].slice(-500));
 
   // The computer's turn reads these, so a turn that starts later never sees stale settings.
   const opponentRef = useRef(false);
@@ -55,13 +68,13 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
   const session = useTableSession({
     gameId,
     makeInitial: (game, table) => game.createInitialBodies(table),
-    blocked: thinking,
+    blocked: thinking && !previewing,
   });
   const { game, input, rules, table, bodies, setBodies, controls, patch, simParams, playing, play, skip, speed, setSpeed } = session;
 
   const board = rules && frame ? rules.scoreboard(frame) : null;
   const computersTurn = !!(opponent && board && board.current === 1 && !board.over);
-  const canShoot = session.canShoot && !board?.over && !computersTurn;
+  const canShoot = session.canShoot && !board?.over && !computersTurn && !thinking;
   const nominations = rules?.nominations && frame ? rules.nominations(frame, bodies) : null;
   const missOffered = !!(rules?.missOffered && frame && rules.missOffered(frame) && history.length > 0);
   const inHand = !!(rules?.ballInHand && frame && rules.ballInHand(frame));
@@ -78,6 +91,8 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
     const result = session.simulate(bodiesNow, ctl);
     setHistory((h) => [...h, { bodies: bodiesNow, frame: frameNow }].slice(-50));
     setLastResult(result);
+    setFoul(null);
+    setBannerHidden(false);
     play(result, () => {
       if (rules && frameNow) {
         const j = rules.judge(frameNow, result, { table, nominated: nomNow });
@@ -85,12 +100,24 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
         setFrame(j.state);
         setNominated(null);
         setMessage(j.message);
+        setFoul(j.foul ? j.message : null);
+        const before = rules.scoreboard(frameNow);
+        const after = rules.scoreboard(j.state);
+        const human = !(opponentRef.current && before.current === 1);
+        session.celebrate({ result, points: j.foul ? 0 : j.points, foul: j.foul, breakBefore: before.breakPoints, breakAfter: after.breakPoints, replay: human && !after.over, log: human });
+        addRecord(recordShot(result, input.strikerId, table, { player: before.current === 1 ? 1 : 0, foul: j.foul, breakAfter: after.breakPoints }));
+        if (after.over) {
+          tableFx.emit({ kind: "confetti" });
+          if (session.fx.celebrations) sound.chime(3);
+        }
         void computerTurn(j.state, j.bodies);
         return;
       }
       const after = game.afterShot?.(result, table) ?? { bodies: result.final };
       setBodies(after.bodies);
       setMessage(summarise(result, input.strikerId) + (after.note ? ` · ${after.note}` : ""));
+      session.celebrate({ result, replay: true });
+      addRecord(recordShot(result, input.strikerId, table, { player: 0, foul: false, breakAfter: 0 }));
     });
   };
 
@@ -103,12 +130,20 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
     setMessage("The computer is thinking…");
     const level = SKILLS[prefsStore.get<SkillName>("skill", "club")];
     const s = await advisor.suggest(gameId, { bodies: bodiesNow, targets: targetsFor(frameNow, bodiesNow, null), skill: level, seed: seedRef.current++, params: simParams });
-    setThinking(false);
-    if (!opponentRef.current) return;
+    if (!opponentRef.current) {
+      setThinking(false);
+      return;
+    }
     const planned = s?.controls ?? { aim: input.defaultAim, power: 0.2, spinX: 0, spinY: 0 };
     const ctl = perturb(planned, level, rngRef.current);
+    // Show the line it has chosen for a moment, so the shot does not come out of nowhere.
     session.setControls(ctl);
-    fire(ctl, bodiesNow, frameNow, null);
+    setPreviewing(true);
+    setMessage("The computer lines up its shot.");
+    await new Promise((r) => setTimeout(r, COMPUTER_AIM_MS));
+    setPreviewing(false);
+    setThinking(false);
+    if (opponentRef.current) fire(ctl, bodiesNow, frameNow, null);
   };
 
   const shoot = () => {
@@ -136,6 +171,9 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
     setBodies(prev.bodies);
     setFrame(prev.frame);
     setNominated(null);
+    setLog((l) => l.slice(0, -1));
+    setFoul(null);
+    setSummaryClosed(false);
     setHistory((h) => h.slice(0, -1));
     setLastResult(null);
     setMessage("Shot undone.");
@@ -149,6 +187,8 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
     setBodies(prev.bodies);
     setFrame(next);
     setNominated(null);
+    setLog((l) => l.slice(0, -1));
+    setFoul(null);
     setHistory((h) => h.slice(0, -1));
     setLastResult(null);
     setMessage("Miss: the shot is replayed from the original position. The foul points stand.");
@@ -163,6 +203,9 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
     setBodies(game.createInitialBodies(table));
     setFrame(withRules && rules ? rules.newFrame() : null);
     setNominated(null);
+    setLog([]);
+    setFoul(null);
+    setSummaryClosed(false);
     setHistory([]);
     setLastResult(null);
     setMessage(withRules ? "Frame started. Player 1 to break." : "New rack.");
@@ -175,14 +218,18 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
   };
 
   const players = board?.players.map((p) => (opponent && p.label === "Player 2" ? { ...p, label: "Computer" } : p));
+  const trays = [0, 1].map((p) => log.filter((r) => r.player === p).flatMap((r) => r.pots));
+  const mine = summariseSession(log, opponent ? 0 : undefined);
 
   return (
     <div className="stage flex-1" onKeyDown={(e) => tableKeys(e, session.nudgeDegrees, shoot)}>
       <div className="stage-table">
-        {board && players && <Scoreboard board={{ ...board, players }} />}
+        {board && players && <Scoreboard board={{ ...board, players }} trays={game.noPotting ? undefined : trays} ballColour={session.tableProps.theme.ballColour} />}
         <TableView
           {...session.tableProps}
-          aiming={canShoot ? session.tableProps.aiming : undefined}
+          aiming={canShoot || previewing ? session.tableProps.aiming : undefined}
+          pull={session.makePull(canShoot && !inHand)}
+          onPullShoot={shoot}
           onPoint={(p) => {
             if (inHand && !playing && !thinking) {
               const moved = game.placeStriker?.(table, bodies, p);
@@ -192,7 +239,22 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
             if (canShoot) session.aimAt(p);
           }}
           label={`${game.name} table. Drag to aim; left and right arrow keys fine-tune the aim; Enter shoots.`}
-        />
+          tools={<TableTools session={session} />}
+        >
+          <TableOverlay session={session} />
+          {computersTurn && thinking && !playing && <TableBanner tone="note">{previewing ? "The computer lines up its shot" : <span className="dots">The computer is thinking</span>}</TableBanner>}
+          {!playing && !computersTurn && !bannerHidden && !board?.over && (foul || missOffered || (inHand && game.placeStriker)) && (
+            <TableBanner tone={foul ? "bad" : "note"} title={foul ? "Foul" : undefined} onClose={() => setBannerHidden(true)}>
+              {foul && <p>{foul.replace(/^Foul:\s*/, "")}</p>}
+              {inHand && game.placeStriker && <p>Ball in hand: tap the table to place it, then aim and shoot.</p>}
+              {missOffered && (
+                <button type="button" onClick={askReplay} disabled={thinking} className="btn btn-ghost mt-1.5 !min-h-8 text-ivory">
+                  Ask for a replay
+                </button>
+              )}
+            </TableBanner>
+          )}
+        </TableView>
       </div>
 
       <aside className="dock" aria-label="Controls">
@@ -202,9 +264,9 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
             value={tab}
             onChange={setTab}
             options={[
-              { value: "shot", label: "Shot" },
-              { value: "coach", label: "Coach" },
-              { value: "table", label: "Table" },
+              { value: "shot" as const, label: "Shot" },
+              ...(game.noPotting ? [] : [{ value: "coach" as const, label: "Coach" }]),
+              { value: "table" as const, label: "Game" },
             ]}
           />
         </div>
@@ -224,7 +286,12 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
                   </select>
                 </Field>
               )}
-              <ShotControls input={input} controls={controls} onChange={patch} aids={session.aids} onAids={session.setAids} />
+              <ShotControls input={input} controls={controls} onChange={patch} availableAids={[]} aids={session.aids} onAids={session.setAids} />
+              {!game.noPotting && (
+                <div className="mt-auto">
+                  <SessionPanel summary={mine} />
+                </div>
+              )}
             </>
           )}
 
@@ -245,27 +312,14 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
           {tab === "table" && (
             <>
               {rules && <Toggle label="Play by the rules" checked={boardRulesReady} disabled={playing || thinking} onChange={startFrame} />}
-              {frame && <Toggle label="Player 2 is the computer" checked={opponent} disabled={playing || thinking} onChange={toggleOpponent} />}
-              <Field label="Table speed" htmlFor="cloth" value={`${clothLabel(session.clothScale)} · ${session.clothScale.toFixed(2)}×`}>
-                <Slider id="cloth" min={CLOTH_SCALE_MIN} max={CLOTH_SCALE_MAX} step={0.05} value={session.clothScale} disabled={playing || thinking} onChange={session.setClothScale} />
-                <p className="mt-1 text-xs leading-relaxed text-muted">Scales the cloth friction. Tune it until shots match the table you play on.</p>
-              </Field>
+              {frame && !game.noPotting && <Toggle label="Player 2 is the computer" checked={opponent} disabled={playing || thinking} onChange={toggleOpponent} />}
             </>
           )}
         </div>
 
         <div className="dock-foot">
-          {missOffered && !computersTurn && (
-            <Callout tone="note">
-              <p>No ball on was hit. You can have the shot played again from where the balls were.</p>
-              <button type="button" onClick={askReplay} disabled={playing || thinking} className="btn btn-ghost mt-2 !min-h-9">
-                Ask for a replay
-              </button>
-            </Callout>
-          )}
-          {inHand && game.placeStriker && !computersTurn && <Callout tone="note">Cue ball in hand: tap the table to place it, then aim and shoot.</Callout>}
           <p className="min-h-9 text-[0.8125rem] leading-snug text-muted" aria-live="polite">
-            {message}
+            {foul && !bannerHidden ? "" : message}
           </p>
           <button type="button" disabled={!canShoot} onClick={shoot} className="btn btn-primary !min-h-12 text-base">
             Shoot
@@ -280,8 +334,45 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
           </PlaybackControls>
         </div>
       </aside>
+
+      {board?.over && players && (
+        <Sheet open={!summaryClosed && !playing} onClose={() => setSummaryClosed(true)} title="Frame over" centre>
+          <p className="display text-3xl font-semibold leading-tight text-brass">{(board.result ?? "Frame over").replace("Player 2", players[1].label)}</p>
+          <dl className="grid grid-cols-2 gap-2">
+            {players.map((p, i) => {
+              const s = summariseSession(log, i as 0 | 1);
+              return (
+                <div key={p.label} className="rounded-lg bg-raised p-3 text-sm">
+                  <dt className="font-semibold">{p.label}</dt>
+                  <dd className="display mt-1 text-3xl font-semibold tabular-nums leading-none">{p.score}</dd>
+                  {!game.noPotting && (
+                    <dd className="mt-2 text-xs text-muted">
+                      High break {s.highBreak} · {s.pots} potted{s.potRate === null ? "" : ` · ${Math.round(s.potRate * 100)}%`}
+                    </dd>
+                  )}
+                </div>
+              );
+            })}
+          </dl>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="btn btn-primary" onClick={() => startFrame(true)}>
+              Rematch
+            </button>
+            {lastResult && (
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setSummaryClosed(true);
+                  play(lastResult);
+                }}
+              >
+                Watch the last shot
+              </button>
+            )}
+          </div>
+        </Sheet>
+      )}
     </div>
   );
 }
-
-const clothLabel = (k: number) => (k < 1 ? "Faster" : k > 1 ? "Slower" : "Standard");

@@ -13,7 +13,7 @@ const MAX_SPEED = 7;
 
 export const pool: Game = {
   id: "pool",
-  name: "Pool (8-ball)",
+  name: "8-Ball Pool",
   params: POOL_PARAMS,
   rules: poolRules,
   input: {

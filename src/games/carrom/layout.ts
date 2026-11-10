@@ -25,6 +25,22 @@ export function makeCoin(id: string, x: number, y: number): Body {
 /** The striker on its baseline, in the middle. */
 export const strikerStart = (table: Table): Body => makeCoin(STRIKER, table.width / 2, CARROM.baselineY);
 
+/** How far along the baseline the striker can sit from the middle, in metres. */
+export const BASELINE_RANGE = 0.22;
+
+/** The striker on its baseline, as near `x` as the coins resting there allow. */
+export function strikerClear(bodies: Body[], x = CARROM.size / 2): Body {
+  const y = CARROM.baselineY;
+  const usable = (px: number) =>
+    Math.abs(px - CARROM.size / 2) <= BASELINE_RANGE &&
+    !bodies.some((o) => o.id !== STRIKER && o.state !== "pocketed" && Math.hypot(o.position.x - px, o.position.y - y) < o.radius + CARROM.strikerRadius + 1e-6);
+  for (let d = 0; d <= 2 * BASELINE_RANGE; d += 0.002) {
+    const px = [x + d, x - d].find(usable);
+    if (px !== undefined) return makeCoin(STRIKER, px, y);
+  }
+  return makeCoin(STRIKER, x, y);
+}
+
 /**
  * The opening pattern: the queen in the centre, six coins in a ring around her, and twelve in the outer ring,
  * with the colours alternating so each side has nine.

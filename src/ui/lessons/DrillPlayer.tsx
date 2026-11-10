@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { GameId } from "@/core/game";
+import { ballName } from "@/core/lessons/insight";
 import { aidsForAttempt, buildLessonBodies, evaluateShot, isTestAttempt, starsFor, totalAttempts } from "@/core/lessons/logic";
 import type { DrillLesson } from "@/core/lessons/schema";
+import { usePref } from "@/core/prefs/usePref";
 import { useProgress } from "@/core/progress/useProgress";
 import { pocketAimPoint } from "@/core/table";
 import type { ShotResult } from "@/core/types";
@@ -12,9 +14,17 @@ import type { Marker } from "@/views/2d/draw";
 import { TableView } from "@/views/TableView";
 import { PlaybackControls } from "../controls/PlaybackControls";
 import { ShotControls } from "../controls/ShotControls";
+import { prefersReducedMotion, tableFx } from "../fx/bus";
+import { sound } from "../fx/sound";
 import { Callout, Segmented, Stars } from "../kit";
+import { TableBanner, TableOverlay } from "../TableOverlay";
+import { TableTools } from "../TableTools";
 import { useAdvisor } from "../useAdvisor";
 import { tableKeys, useTableSession } from "../useTableSession";
+import { useShotDemo, type DemoStep } from "./useShotDemo";
+
+const NONE: string[] = [];
+const noSubscribe = () => () => {};
 
 interface AttemptRecord {
   success: boolean;
@@ -26,12 +36,13 @@ interface Summary {
   score: number;
   testScore: number;
   stars: number;
+  newBest: boolean;
 }
 
 /** Runs one drill: practice attempts with fading aids, then no-aid test attempts, scored and saved locally. */
 export function DrillPlayer({ gameId, lesson, nextHref }: { gameId: GameId; lesson: DrillLesson; nextHref?: string }) {
   const total = totalAttempts(lesson);
-  const { save } = useProgress(gameId);
+  const { save, byLesson } = useProgress(gameId);
   const advisor = useAdvisor();
   const [thinking, setThinking] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
@@ -40,6 +51,7 @@ export function DrillPlayer({ gameId, lesson, nextHref }: { gameId: GameId; less
   const [summary, setSummary] = useState<Summary | null>(null);
   const [lastResult, setLastResult] = useState<ShotResult | null>(null);
   const [tab, setTab] = useState<"shot" | "coach">("shot");
+  const [demoRunning, setDemoRunning] = useState(false);
 
   const shotTaken = results.length > attempt;
   const finished = summary !== null;
@@ -57,8 +69,51 @@ export function DrillPlayer({ gameId, lesson, nextHref }: { gameId: GameId; less
     },
     blocked: shotTaken || finished || thinking,
     allowedAids: allowed,
+    forceAids: demoRunning,
   });
-  const { game, input, table, initial, setBodies, controls, patch, simParams, playing, play, skip, speed, setSpeed, canShoot } = session;
+  const { game, input, table, initial, setBodies, controls, patch, simParams, playing, play, skip, speed, setSpeed } = session;
+
+  const demo = useShotDemo(session, () => advisor.solve(gameId, lesson.id, simParams), (found) => {
+    setDemoRunning(false);
+    setHint(found ? "Your turn. Line it up and play it yourself." : "Could not find a shot to show for this one.");
+  });
+  const canShoot = session.canShoot && !demoRunning;
+  const canDemo = !testing && !shotTaken && !finished && !playing && !thinking;
+  const startDemo = () => {
+    setHint(null);
+    setDemoRunning(true);
+    void demo.start();
+  };
+  const stopDemo = () => {
+    setDemoRunning(false);
+    demo.stop();
+  };
+
+  // Show each drill's demonstration once, the first time it is opened, after the first-run tour has finished.
+  const [tourDone] = usePref<boolean>("tourDone", false);
+  const [demosSeen, setDemosSeen] = usePref<string[]>("demosSeen", NONE);
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const autoStarted = useRef(false);
+  const startDemoRef = useRef(startDemo);
+  useEffect(() => {
+    startDemoRef.current = startDemo;
+  });
+  useEffect(() => {
+    if (!hydrated || !tourDone || autoStarted.current || demosSeen.includes(lesson.id) || prefersReducedMotion()) return;
+    autoStarted.current = true;
+    setDemosSeen([...demosSeen, lesson.id]);
+    startDemoRef.current();
+  }, [hydrated, tourDone, demosSeen, lesson.id, setDemosSeen]);
+
+  const targetName = lesson.success.pot ? ballName(lesson.success.pot.ball) : "ball";
+  const striker = input.tipOffset ? "cue ball" : "striker";
+  const spin = input.tipOffset && demo.plan ? (demo.plan.spinY > 0.05 ? " The tip is set high, for follow." : demo.plan.spinY < -0.05 ? " The tip is set low, for draw." : "") : "";
+  const caption: Record<DemoStep, { title: string; text: string }> = {
+    prepare: { title: "Watch how it's done", text: "Working out a good shot from here." },
+    aim: { title: "1 · Aim", text: lesson.success.pot ? `The line runs to the ghost ball: where the ${striker} must be when it meets the ${targetName}.` : `The line shows where the ${striker} will go.` },
+    power: { title: "2 · Power", text: `This shot needs about ${((demo.plan?.power ?? 0) * input.maxSpeed).toFixed(1)} m/s.${spin}` },
+    shot: { title: "3 · Play it", text: lesson.success.zone ? "In slow motion. Watch where it finishes: inside the gold circle." : "In slow motion. Watch both balls after they meet." },
+  };
 
   const markers = useMemo<Marker[]>(() => {
     const m: Marker[] = [];
@@ -84,11 +139,16 @@ export function DrillPlayer({ gameId, lesson, nextHref }: { gameId: GameId; less
       const all = [...results, { success: outcome.success, test: testing, reasons: outcome.reasons }];
       setResults(all);
       setBodies(game.afterShot?.(result, table).bodies ?? result.final);
+      session.celebrate({ result });
+      if (outcome.success && session.fx.celebrations) sound.chime(1);
       if (all.length === total) {
         const score = all.filter((r) => r.success).length;
         const testScore = all.filter((r) => r.success && r.test).length;
         const stars = starsFor(lesson, score);
-        setSummary({ score, testScore, stars });
+        const before = byLesson.get(lesson.id);
+        setSummary({ score, testScore, stars, newBest: !!before && before.plays > 0 && score > before.bestScore });
+        if (stars === 3) tableFx.emit({ kind: "confetti" });
+        if (stars > 0 && session.fx.celebrations) sound.chime(stars as 1 | 2 | 3);
         save({ gameId, lessonId: lesson.id, kind: "drill", score, testScore, attempts: total, stars, at: Date.now() });
       }
     });
@@ -139,7 +199,16 @@ export function DrillPlayer({ gameId, lesson, nextHref }: { gameId: GameId; less
   return (
     <div className="stage flex-1" onKeyDown={(e) => tableKeys(e, session.nudgeDegrees, shoot)}>
       <div className="stage-table">
-        <TableView {...session.tableProps} markers={markers} onPoint={session.aimAt} label={`${lesson.title}. Drag to aim; left and right arrow keys fine-tune the aim; Enter shoots.`} />
+        <TableView {...session.tableProps} markers={markers} onPoint={demoRunning ? undefined : session.aimAt} label={`${lesson.title}. Drag to aim; left and right arrow keys fine-tune the aim; Enter shoots.`} tools={<TableTools session={session} />} pull={session.makePull(canShoot)} onPullShoot={shoot}>
+          <TableOverlay session={session} />
+          {demo.step && (
+            <TableBanner tone="note" title={caption[demo.step].title} onClose={stopDemo}>
+              <p key={demo.step} className="rise">
+                {caption[demo.step].text}
+              </p>
+            </TableBanner>
+          )}
+        </TableView>
       </div>
 
       <aside className="dock" aria-label="Lesson">
@@ -148,6 +217,11 @@ export function DrillPlayer({ gameId, lesson, nextHref }: { gameId: GameId; less
           <h1 className="display mt-0.5 text-xl font-semibold leading-tight">{lesson.title}</h1>
           <p className="mt-1 text-[0.8125rem] leading-snug text-muted">{lesson.goal}</p>
           {lesson.success.zone && <p className="mt-1 text-[0.8125rem] text-brass">Finish the cue ball inside the gold circle.</p>}
+          {!demoRunning && (
+            <button type="button" className="btn btn-quiet !min-h-8 !px-0 text-brass" disabled={!canDemo} onClick={startDemo}>
+              ▶ Watch how it&apos;s done
+            </button>
+          )}
           <div className="mt-3 flex items-center justify-between text-xs text-muted">
             <span>{finished ? "Finished" : `${testing ? "Test shot" : "Practice"} ${attempt + 1} of ${total}`}</span>
             <span className="tabular-nums">
@@ -170,8 +244,9 @@ export function DrillPlayer({ gameId, lesson, nextHref }: { gameId: GameId; less
                 {summary.score}
                 <span className="text-xl text-muted"> / {total}</span>
               </p>
-              <Stars n={summary.stars} size="text-2xl" />
+              <Stars n={summary.stars} size="text-2xl" animate />
             </div>
+            {summary.newBest && <p className="eyebrow fx-star self-start rounded-full border border-brass/60 bg-brass/10 px-3 py-1">New best</p>}
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <div className="rounded-lg bg-raised p-3">
                 <dt className="text-xs text-muted">With aids</dt>

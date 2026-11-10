@@ -14,7 +14,7 @@ const isSpeed = (v: unknown): v is number => v === 0.5 || v === 1 || v === 2 || 
  * Plays a finished ShotResult as an animation. Frames are drawn through `paintRef` straight from the closed-form
  * motion, so React only re-renders when playback starts or stops.
  */
-export function useShotPlayer(game: Game, paintRef: MutableRefObject<PaintFn | null>, params?: SimParams) {
+export function useShotPlayer(game: Game, paintRef: MutableRefObject<PaintFn | null>, params?: SimParams, onEvent?: (result: ShotResult, index: number) => void) {
   const displayRef = useRef<Body[] | null>(null);
   const rafRef = useRef(0);
   const speedRef = useRef(1);
@@ -28,16 +28,20 @@ export function useShotPlayer(game: Game, paintRef: MutableRefObject<PaintFn | n
   useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
 
   const play = useCallback(
-    (result: ShotResult, onDone?: () => void) => {
+    (result: ShotResult, onDone?: () => void, rate = 1) => {
       cancelAnimationFrame(rafRef.current);
       skipRef.current = false;
       setPlaying(true);
+      onEvent?.(result, -1);
       let t = 0;
+      let next = 0;
       let last = performance.now();
       const step = (now: number) => {
-        const simDt = ((now - last) / 1000) * speedRef.current;
+        const simDt = ((now - last) / 1000) * speedRef.current * rate;
         t += simDt;
         last = now;
+        // Before the end check: a shot often finishes on its last event, such as the final pot.
+        while (!skipRef.current && next < result.events.length && result.events[next].t <= t) onEvent?.(result, next++);
         if (skipRef.current || t >= result.duration) {
           displayRef.current = null;
           setPlaying(false);
@@ -50,7 +54,7 @@ export function useShotPlayer(game: Game, paintRef: MutableRefObject<PaintFn | n
       };
       rafRef.current = requestAnimationFrame(step);
     },
-    [game, paintRef, params],
+    [game, paintRef, params, onEvent],
   );
 
   const skip = useCallback(() => {

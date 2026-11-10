@@ -1,6 +1,7 @@
 import type { Body, Table } from "@/core/types";
+import { cushionOutline, pocketOpening, railOpening } from "../jaws";
 import { toScreen, type Viewport } from "./geometry";
-import type { Prediction } from "./prediction";
+import { visibleMarks, type Prediction } from "./prediction";
 import type { GameTheme } from "./theme";
 
 export interface AimAids {
@@ -93,10 +94,22 @@ export function renderTableLayer(vp: Viewport, cssW: number, cssH: number, dpr: 
   ctx.roundRect(outer.x + 0.5, outer.y + 0.5, outer.w - 1, outer.h - 1, radius);
   ctx.stroke();
 
-  // Cushion band, then the cloth with its light pooled in the middle.
-  const bandRect = area(band);
-  ctx.fillStyle = surface.cushion;
-  ctx.fillRect(bandRect.x, bandRect.y, bandRect.w, bandRect.h);
+  const trace = (points: { x: number; y: number }[]) => {
+    ctx.beginPath();
+    points.forEach((p, i) => {
+      const c = toScreen(vp, p);
+      if (i === 0) ctx.moveTo(c.x, c.y);
+      else ctx.lineTo(c.x, c.y);
+    });
+    ctx.closePath();
+  };
+
+  // The opening inside the rail is dark: only the cushions and the cloth cover it, so the pockets read as holes.
+  trace(railOpening(table, band));
+  ctx.fillStyle = theme.opening ?? "#070605";
+  ctx.fill();
+
+  // The cloth, with its light pooled in the middle.
   const cloth = area(0);
   const glow = ctx.createRadialGradient(
     cloth.x + cloth.w / 2,
@@ -118,10 +131,17 @@ export function renderTableLayer(vp: Viewport, cssW: number, cssH: number, dpr: 
 
   theme.drawMarkings(ctx, vp, table);
 
-  // Pockets: a dark well with a lip, drawn over the band so the cushions visibly end at the jaws.
+  // Pockets: a dark well with a lip. The cushions go on last, so their rounded ends sit crisply over the opening.
   for (const p of table.pockets) {
-    const c = toScreen(vp, p.position);
-    const r = p.radius * 1.28 * s;
+    if (p.unmarked) continue;
+    const { centre, radius, throat } = pocketOpening(p, table, band);
+    if (throat) {
+      trace(throat);
+      ctx.fillStyle = "#050505";
+      ctx.fill();
+    }
+    const c = toScreen(vp, centre);
+    const r = radius * s;
     const well = ctx.createRadialGradient(c.x, c.y, r * 0.1, c.x, c.y, r);
     well.addColorStop(0, "#000");
     well.addColorStop(0.82, "#050505");
@@ -135,6 +155,15 @@ export function renderTableLayer(vp: Viewport, cssW: number, cssH: number, dpr: 
     ctx.lineWidth = Math.max(1, 0.006 * s);
     ctx.stroke();
     ctx.globalAlpha = 1;
+  }
+
+  ctx.fillStyle = surface.cushion;
+  ctx.strokeStyle = "rgba(0,0,0,0.35)";
+  ctx.lineWidth = 1;
+  for (const c of table.cushions) {
+    trace(cushionOutline(c, table, band));
+    ctx.fill();
+    ctx.stroke();
   }
   return canvas;
 }
@@ -205,8 +234,11 @@ function dashedPath(ctx: CanvasRenderingContext2D, points: { x: number; y: numbe
   ctx.lineCap = "butt";
 }
 
-function arrow(ctx: CanvasRenderingContext2D, from: { x: number; y: number }, to: { x: number; y: number }, colour: string) {
-  dashedPath(ctx, [from, to], colour, 2);
+/** A dashed line with an arrowhead where it ends. */
+function arrowPath(ctx: CanvasRenderingContext2D, points: { x: number; y: number }[], colour: string) {
+  dashedPath(ctx, points, colour, 2);
+  const to = points[points.length - 1];
+  const from = points[points.length - 2];
   const a = Math.atan2(to.y - from.y, to.x - from.x);
   const size = 8;
   ctx.fillStyle = colour;
@@ -216,6 +248,24 @@ function arrow(ctx: CanvasRenderingContext2D, from: { x: number; y: number }, to
   ctx.lineTo(to.x + Math.cos(a - 2.5) * size, to.y + Math.sin(a - 2.5) * size);
   ctx.closePath();
   ctx.fill();
+}
+
+let labelFont: string | null = null;
+
+/** A small readout on a dark pill, legible on any cloth. */
+function drawLabel(ctx: CanvasRenderingContext2D, at: { x: number; y: number }, text: string) {
+  labelFont ??= `600 11px ${getComputedStyle(document.body).fontFamily}`;
+  ctx.font = labelFont;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const w = ctx.measureText(text).width + 10;
+  const h = 17;
+  ctx.fillStyle = "rgba(10,13,11,0.82)";
+  ctx.beginPath();
+  ctx.roundRect(at.x - w / 2, at.y - h / 2, w, h, 4);
+  ctx.fill();
+  ctx.fillStyle = IVORY;
+  ctx.fillText(text, at.x, at.y + 0.5);
 }
 
 /** Draw the moving part of a frame over the cached table layer. */
@@ -289,16 +339,9 @@ export function drawScene(
       ctx.fill();
       ctx.stroke();
     }
-    if (pr?.ghost && aids.prediction && pr.hitVelocity && pr.cueVelocity) {
-      const ray = (from: { x: number; y: number }, v: { x: number; y: number }, colour: string) => {
-        const speed = Math.hypot(v.x, v.y);
-        if (speed < 1e-6) return;
-        const len = Math.min(0.9, Math.max(0.15, speed * 0.3)) * Math.min(1, scene.table.width / 1.2);
-        arrow(ctx, toScreen(vp, from), toScreen(vp, { x: from.x + (v.x / speed) * len, y: from.y + (v.y / speed) * len }), colour);
-      };
-      const hit = scene.bodies.find((b) => b.id === pr.hitId);
-      if (hit) ray(hit.position, pr.hitVelocity, BRASS);
-      ray(pr.ghost, pr.cueVelocity, IVORY);
+    if (aids.prediction) {
+      if (pr?.hitPath) arrowPath(ctx, pr.hitPath.map((p) => toScreen(vp, p)), BRASS);
+      if (pr?.cuePath) arrowPath(ctx, pr.cuePath.map((p) => toScreen(vp, p)), IVORY);
     }
   }
 
@@ -317,6 +360,24 @@ export function drawScene(
     const c = toScreen(vp, b.position);
     const { image, size } = ballSprite(b.id, b.radius * s, dpr, scene.theme);
     ctx.drawImage(image, c.x - size / 2, c.y - size / 2, size, size);
+  }
+
+  // Angle readouts go over the balls, so a number is never hidden.
+  if (aiming && cue && cue.state !== "pocketed") {
+    for (const m of visibleMarks(aiming.prediction, aiming.aids)) {
+      ctx.strokeStyle = BRASS;
+      ctx.lineWidth = 1.25;
+      for (const line of m.lines) {
+        ctx.beginPath();
+        line.forEach((p, i) => {
+          const c = toScreen(vp, p);
+          if (i === 0) ctx.moveTo(c.x, c.y);
+          else ctx.lineTo(c.x, c.y);
+        });
+        ctx.stroke();
+      }
+      drawLabel(ctx, toScreen(vp, m.labelAt), m.label);
+    }
   }
 
   // Cue stick behind the striker, pulled back further with more power. Discs are flicked, so have no cue.

@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { AdviceRequest, Suggestion } from "@/core/ai/advisor";
 import type { ControlState, GameId } from "@/core/game";
+import type { PotFound } from "@/core/lessons/solver";
 import type { SimParams } from "@/core/sim/params";
+import type { Body } from "@/core/types";
 import { handleAdvisorRequest } from "@/workers/handler";
 import type { AdvisorRequest, AdvisorResponse } from "@/workers/protocol";
 
@@ -100,5 +102,13 @@ export function useAdvisor() {
     [send],
   );
 
-  return { suggest, solve };
+  const findPot = useCallback(
+    async (gameId: GameId, bodies: Body[], targets: string[], params?: SimParams): Promise<PotFound | null> => {
+      const r = await send({ kind: "findPot", gameId, bodies, targets, params });
+      return r.kind === "findPot" ? r.pot : null;
+    },
+    [send],
+  );
+
+  return { suggest, solve, findPot };
 }

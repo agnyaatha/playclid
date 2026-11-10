@@ -1,9 +1,7 @@
 import type { Game } from "@/core/game";
-import { reclassify } from "@/core/sim/motion";
 import type { SimParams } from "@/core/sim/params";
-import { simulateEvents, type SimOptions } from "@/core/sim/simulate";
-import type { Body, ShotInput, ShotResult } from "@/core/types";
-import { makeCoin, startingBodies, STRIKER, strikerStart } from "./layout";
+import { flickSimulate } from "../shared";
+import { BASELINE_RANGE, makeCoin, startingBodies, STRIKER, strikerClear, strikerStart } from "./layout";
 import { carromRules } from "./rules";
 import { createCarromTable } from "./table";
 
@@ -18,8 +16,6 @@ export const CARROM_PARAMS: SimParams = {
 };
 
 const MAX_SPEED = 4.5;
-/** How far along the baseline the striker can slide from the middle, in metres, per unit of the placement control. */
-const RANGE = 0.22;
 
 export const carrom: Game = {
   id: "carrom",
@@ -44,30 +40,17 @@ export const carrom: Game = {
   /** Slide the striker along its baseline to where the control says. */
   place(bodies, controls) {
     return bodies.map((b) =>
-      b.id === STRIKER ? { ...b, position: { ...b.position, x: b.position.x + controls.spinX * RANGE } } : b,
+      b.id === STRIKER ? { ...b, position: { ...b.position, x: strikerClear(bodies, b.position.x + controls.spinX * BASELINE_RANGE).position.x } } : b,
     );
   },
-  afterShot(result, table) {
+  afterShot(result) {
     if (result.final.find((b) => b.id === STRIKER)?.state !== "pocketed") return { bodies: result.final };
     return {
-      bodies: result.final.map((b) => (b.id === STRIKER ? strikerStart(table) : b)),
+      bodies: result.final.map((b) => (b.id === STRIKER ? strikerClear(result.final) : b)),
       note: "Striker potted: it goes back to the baseline",
     };
   },
+  resetStriker: (bodies) => bodies.map((b) => (b.id === STRIKER ? strikerClear(bodies) : b)),
   /** A flick: the striker leaves with the given speed and no spin, already in its sliding-equals-rolling state. */
-  simulate(table, bodies: Body[], shot: ShotInput, opts?: SimOptions): ShotResult {
-    const struck = bodies.map((b) => {
-      if (b.id !== shot.bodyId) return b;
-      const speed = shot.params.speed;
-      const vx = Math.cos(shot.params.aim) * speed;
-      const vy = Math.sin(shot.params.aim) * speed;
-      return reclassify({
-        ...b,
-        state: "rolling",
-        velocity: { x: vx, y: vy, z: 0 },
-        angularVelocity: { x: -vy / b.radius, y: vx / b.radius, z: 0 },
-      });
-    });
-    return simulateEvents(table, struck, CARROM_PARAMS, opts);
-  },
+  simulate: flickSimulate(CARROM_PARAMS),
 };

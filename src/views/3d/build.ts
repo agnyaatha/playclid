@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { Table } from "@/core/types";
 import type { GameTheme } from "../2d/theme";
+import { cushionOutline, pocketOpening, railOpening, type PlanPoint } from "../jaws";
 import { toThree } from "./coords";
 
 const hasDom = () => typeof document !== "undefined";
@@ -185,21 +186,42 @@ function woodTexture(base: string, dark: string): THREE.CanvasTexture | null {
   return tex;
 }
 
-/** A cushion cross-section: its inner face leans out from a nose above the cloth, as a real rubber does. */
-function cushionGeometry(length: number, band: number, height: number): THREE.BufferGeometry {
-  const noseHeight = height * 0.86;
-  const shape = new THREE.Shape();
-  shape.moveTo(0, 0.001);
-  shape.lineTo(0, noseHeight * 0.85);
-  shape.lineTo(band * 0.14, height);
-  shape.lineTo(band, height);
-  shape.lineTo(band, 0.001);
-  shape.closePath();
-  const g = new THREE.ExtrudeGeometry(shape, { depth: length, bevelEnabled: false, steps: 1 });
-  g.translate(0, 0, -length / 2);
-  // Now: x across the band (outwards), y up, z along the cushion. Turn it so that x runs along the cushion.
-  g.rotateY(Math.PI / 2);
+/** A point of the table plan as a 2D shape point; `extrudePlan` stands the shape up in world axes. */
+const planPoint = (p: PlanPoint) => new THREE.Vector2(p.y, -p.x);
+
+/** Raise a plan shape from the cloth to `height`, softening its top edge. Its walls stay exactly on the outline. */
+function extrudePlan(shape: THREE.Shape, height: number, bevel: number): THREE.BufferGeometry {
+  const g = new THREE.ExtrudeGeometry(shape, {
+    depth: height - 2 * bevel,
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: bevel,
+    bevelOffset: -bevel,
+    bevelSegments: 3,
+    curveSegments: 10,
+  });
+  g.rotateX(-Math.PI / 2);
+  g.translate(0, bevel, 0);
   return g;
+}
+
+/** One rail all the way round, with a smooth round notch at every pocket and rounded outer corners. */
+function railShape(table: Table, frame: number, band: number): THREE.Shape {
+  const W = table.width + frame;
+  const L = table.length + frame;
+  const r = Math.min(0.045, frame * 0.5);
+  const shape = new THREE.Shape();
+  shape.moveTo(-frame + r, frame);
+  shape.lineTo(L - r, frame);
+  shape.quadraticCurveTo(L, frame, L, frame - r);
+  shape.lineTo(L, -W + r);
+  shape.quadraticCurveTo(L, -W, L - r, -W);
+  shape.lineTo(-frame + r, -W);
+  shape.quadraticCurveTo(-frame, -W, -frame, -W + r);
+  shape.lineTo(-frame, frame - r);
+  shape.quadraticCurveTo(-frame, frame, -frame + r, frame);
+  shape.holes.push(new THREE.Path(railOpening(table, band).map(planPoint)));
+  return shape;
 }
 
 const named = <T extends THREE.Object3D>(o: T, name: string) => {
@@ -214,7 +236,6 @@ export function buildTable(table: Table, theme: GameTheme): THREE.Group {
   const L = table.length;
   const W = table.width;
   const { surface, frame, band } = theme;
-  const rail = frame - band;
   const railTop = railHeight(theme);
 
   const wood = woodTexture(surface.rail, surface.railDark);
@@ -225,7 +246,7 @@ export function buildTable(table: Table, theme: GameTheme): THREE.Group {
   slab.receiveShadow = true;
   g.add(named(slab, "slab"));
 
-  const bandSurface = new THREE.Mesh(new THREE.PlaneGeometry(L + 2 * band, W + 2 * band), new THREE.MeshStandardMaterial({ color: surface.cushion, roughness: 0.95 }));
+  const bandSurface = new THREE.Mesh(new THREE.PlaneGeometry(L + 2 * band, W + 2 * band), new THREE.MeshStandardMaterial({ color: theme.opening ?? 0x070605, roughness: 1 }));
   bandSurface.rotation.x = -Math.PI / 2;
   bandSurface.position.set(L / 2, -0.0008, W / 2);
   g.add(named(bandSurface, "band"));
@@ -237,24 +258,24 @@ export function buildTable(table: Table, theme: GameTheme): THREE.Group {
   cloth.receiveShadow = true;
   g.add(named(cloth, "cloth"));
 
-  // Rails around the cushion band: X runs along the table, Z across it.
-  const addRail = (w: number, d: number, x: number, z: number) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, railTop, d), railMaterial);
-    m.position.set(x, railTop / 2, z);
-    m.castShadow = true;
-    g.add(named(m, "rail"));
-  };
-  addRail(L + 2 * frame, rail, L / 2, -(band + rail / 2));
-  addRail(L + 2 * frame, rail, L / 2, W + band + rail / 2);
-  addRail(rail, W + 2 * band, -(band + rail / 2), W / 2);
-  addRail(rail, W + 2 * band, L + band + rail / 2, W / 2);
+  const railMesh = new THREE.Mesh(extrudePlan(railShape(table, frame, band), railTop, Math.min(0.006, railTop * 0.2)), railMaterial);
+  railMesh.castShadow = true;
+  g.add(named(railMesh, "rail"));
 
-  // Pockets are dark wells with a trim ring, sitting over the band in the gap between cushions.
+  // Pockets are dark wells with a trim ring, sitting in the rail's notches between the cushions.
   const wellMaterial = new THREE.MeshBasicMaterial({ color: 0x030303 });
   const ringMaterial = new THREE.MeshStandardMaterial({ color: surface.trim, roughness: 0.3, metalness: 0.8 });
   for (const p of table.pockets) {
-    const [x, , z] = toThree(p.position);
-    const r = p.radius * 1.28;
+    if (p.unmarked) continue;
+    const { centre, radius: r, throat } = pocketOpening(p, table, band);
+    const [x, , z] = toThree({ ...centre, z: 0 });
+    if (throat) {
+      // Lying flat maps the shape's y to -Z, the same way `planPoint` does.
+      const gap = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape(throat.map(planPoint))), wellMaterial);
+      gap.rotation.x = -Math.PI / 2;
+      gap.position.y = 0.003;
+      g.add(named(gap, "throat"));
+    }
     const well = new THREE.Mesh(new THREE.CircleGeometry(r, 36), wellMaterial);
     well.rotation.x = -Math.PI / 2;
     well.position.set(x, 0.004, z);
@@ -265,30 +286,11 @@ export function buildTable(table: Table, theme: GameTheme): THREE.Group {
     g.add(named(ring, "pocket-ring"));
   }
 
-  // Cushions stop at the jaw tips. The nose of each sits exactly on the physics cushion line.
+  // Cushions stop at the jaw tips, with rounded ends. The nose of each sits exactly on the physics cushion line.
   const cushionMaterial = new THREE.MeshStandardMaterial({ color: surface.cushion, roughness: 0.88 });
   const height = cushionHeight(theme);
-  const centreX = L / 2;
-  const centreZ = W / 2;
   for (const c of table.cushions) {
-    const [ax, , az] = toThree(c.a);
-    const [bx, , bz] = toThree(c.b);
-    const len = Math.hypot(bx - ax, bz - az);
-    const dx = (bx - ax) / len;
-    const dz = (bz - az) / len;
-    const mx = (ax + bx) / 2;
-    const mz = (az + bz) / 2;
-    // Outward normal: away from the middle of the table.
-    let nx = -dz;
-    let nz = dx;
-    if ((centreX - mx) * nx + (centreZ - mz) * nz > 0) {
-      nx = -nx;
-      nz = -nz;
-    }
-    const m = new THREE.Mesh(cushionGeometry(len, band, height), cushionMaterial);
-    // The extrusion has its length on X and band depth on local -Z; turn so the depth points along the outward normal.
-    m.rotation.y = Math.atan2(-nx, -nz);
-    m.position.set(mx, 0, mz);
+    const m = new THREE.Mesh(extrudePlan(new THREE.Shape(cushionOutline(c, table, band).map(planPoint)), height, Math.min(0.006, height * 0.2)), cushionMaterial);
     m.receiveShadow = true;
     g.add(named(m, "cushion"));
   }

@@ -1,6 +1,6 @@
 import type { Judgement, RulesEngine, RulesState, Scoreboard } from "@/core/rules";
 import type { Body, ShotResult, Table } from "@/core/types";
-import { isBlack, isWhite, QUEEN, STRIKER, strikerStart } from "./layout";
+import { isBlack, isWhite, QUEEN, STRIKER, strikerClear } from "./layout";
 
 /** Simplified carrom: Player 1 plays the white coins, Player 2 the black. The first to clear their colour wins. */
 export interface CarromState {
@@ -35,6 +35,8 @@ export interface CarromOutcome {
   points: number;
   /** Coins to put back on the board centre (foul penalty, or an uncovered queen). */
   respot: string[];
+  /** The shooter also forfeits one earlier coin, which goes back on the board. */
+  penalty?: boolean;
   message: string;
 }
 
@@ -63,7 +65,7 @@ export function judgeShot(prev: CarromState, potted: string[]): CarromOutcome {
       s.queenPending = null;
     }
     s.current = opp;
-    return { state: s, foul: true, points: 0, respot, message: `Foul: the striker was potted. ${player(opp)} plays.` };
+    return { state: s, foul: true, points: 0, respot, penalty: penalty > 0, message: `Foul: the striker was potted. ${player(opp)} plays.` };
   }
 
   let points = 0;
@@ -133,9 +135,12 @@ export const carromRules: RulesEngine = {
   judge(state: RulesState, result: ShotResult, ctx): Judgement {
     const potted = result.events.flatMap((e) => (e.type === "pocket" ? [e.body] : []));
     const outcome = judgeShot(state as CarromState, potted);
-    let bodies = applyRespots(ctx.table, result.final, outcome.respot);
-    // The striker always returns to the shooter's baseline for the next turn.
-    bodies = bodies.map((b) => (b.id === STRIKER ? strikerStart(ctx.table) : b));
+    const mine = colourOf((state as CarromState).current);
+    const forfeited = outcome.penalty ? result.final.filter((b) => b.state === "pocketed" && mine(b.id)).slice(0, 1).map((b) => b.id) : [];
+    let bodies = applyRespots(ctx.table, result.final, [...outcome.respot, ...forfeited]);
+    // The striker always returns to the shooter's baseline for the next turn, clear of any coin resting on it.
+    const striker = strikerClear(bodies);
+    bodies = bodies.map((b) => (b.id === STRIKER ? striker : b));
     return { state: outcome.state, bodies, message: outcome.message, foul: outcome.foul, points: outcome.points };
   },
   scoreboard(state: RulesState): Scoreboard {

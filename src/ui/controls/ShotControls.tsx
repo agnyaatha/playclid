@@ -70,15 +70,20 @@ export function ShotControls({ input, controls, onChange, availableAids, aids, o
         </div>
       )}
 
-      {aidKeys.length > 0 && (
-        <div role="group" aria-label="Aiming aids" className="flex flex-wrap gap-1.5">
-          {aidKeys.map((key) => (
-            <Chip key={key} on={aids[key]} onClick={() => onAids({ ...aids, [key]: !aids[key] })}>
-              {AID_LABELS[key]}
-            </Chip>
-          ))}
-        </div>
-      )}
+      {aidKeys.length > 0 && <AidChips keys={aidKeys} aids={aids} onAids={onAids} />}
+    </div>
+  );
+}
+
+/** One switch per aiming aid. */
+export function AidChips({ keys = Object.keys(AID_LABELS) as Array<keyof AimAids>, aids, onAids }: { keys?: Array<keyof AimAids>; aids: AimAids; onAids: (a: AimAids) => void }) {
+  return (
+    <div role="group" aria-label="Aiming aids" className="flex flex-wrap gap-1.5">
+      {keys.map((key) => (
+        <Chip key={key} on={aids[key]} onClick={() => onAids({ ...aids, [key]: !aids[key] })}>
+          {AID_LABELS[key]}
+        </Chip>
+      ))}
     </div>
   );
 }

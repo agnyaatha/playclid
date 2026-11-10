@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { CARROM, createCarromTable } from "@/games/carrom/table";
 import { createSnookerTable } from "@/games/snooker/table";
-import { povPose, poseDistance, poseFor, lerpPose, topHeight, topPose } from "./camera";
+import { FOV, povPose, poseDistance, poseFor, lerpPose, topHeight, topPose } from "./camera";
 import { aimDirection, fromThree, toThree } from "./coords";
 
 const table = createSnookerTable();
@@ -67,6 +68,29 @@ describe("camera poses", () => {
     expect(poseFor("auto", true, 1.9, table, striker, Math.PI / 2).position[1]).toBeGreaterThan(1);
     expect(poseFor("pov", true, 1.9, table, striker, Math.PI / 2).position[1]).toBeLessThan(1);
     expect(poseFor("top", false, 1.9, table, striker, Math.PI / 2).position[1]).toBeGreaterThan(1);
+  });
+
+  it("frames the whole square board and the striker at any aspect ratio", () => {
+    const board = createCarromTable();
+    const striker = { x: board.width / 2, y: CARROM.baselineY };
+    const half = Math.tan((FOV * Math.PI) / 360);
+    const dot = (a: number[], b: number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const cross = (a: number[], b: number[]) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    const unit = (a: number[]) => a.map((v) => v / Math.hypot(...a));
+    for (const aspect of [0.6, 1, 1.75, 2.5]) {
+      const pose = poseFor("auto", false, aspect, board, striker, Math.PI / 2);
+      const forward = unit(pose.target.map((v, i) => v - pose.position[i]));
+      const right = unit(cross(forward, pose.up));
+      const up = cross(right, forward);
+      const S = board.width;
+      for (const [x, y] of [[0, 0], [S, 0], [0, S], [S, S], [striker.x, striker.y]]) {
+        const [px, py, pz] = toThree({ x, y, z: 0 });
+        const d = [px - pose.position[0], py - pose.position[1], pz - pose.position[2]];
+        const depth = dot(d, forward);
+        expect(Math.abs(dot(d, up)) / depth).toBeLessThanOrEqual(half);
+        expect(Math.abs(dot(d, right)) / depth).toBeLessThanOrEqual(half * aspect);
+      }
+    }
   });
 
   it("falls back to overhead when there is no striker to follow", () => {

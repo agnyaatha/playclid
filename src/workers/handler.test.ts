@@ -25,6 +25,13 @@ describe("advisor handler", () => {
     if (res.kind === "solve") expect(res.controls).not.toBeNull();
   });
 
+  it("finds a pot from a live position, skipping potted balls", () => {
+    const bodies = [snooker.createBody("white", 0.85, mid), snooker.createBody("red1", 1.25, mid), { ...snooker.createBody("blue", 1, 1), state: "pocketed" as const }];
+    const res = handleAdvisorRequest({ id: 5, kind: "findPot", gameId: "snooker", bodies, targets: ["blue", "red1"] });
+    expect(res.kind).toBe("findPot");
+    if (res.kind === "findPot") expect(res.pot?.ball).toBe("red1");
+  });
+
   it("returns null for a lesson that is not a drill, and an error for an unknown game", () => {
     const watch = handleAdvisorRequest({ id: 2, kind: "solve", gameId: "snooker", lessonId: "m0-watch" });
     expect(watch).toMatchObject({ kind: "solve", controls: null });

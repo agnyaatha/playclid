@@ -1,5 +1,6 @@
 import type { AidName, DrillLesson } from "@/core/lessons/schema";
 import { cutLayout as sharedCutLayout } from "@/core/lessons/geometry";
+import { colourSpots } from "../layout";
 import { SNOOKER, createSnookerTable } from "../table";
 
 const table = createSnookerTable();
@@ -134,6 +135,32 @@ const m3: DrillLesson[] = [
     ["Thin cuts need accuracy more than power, and a little more pace helps the red hold its line."],
     1,
   ),
+  potLesson(
+    "m3-half-ball-left",
+    7,
+    "Half-ball cut from the other side",
+    "The same 30° cut into the left middle pocket. Most players favour one side, so train the weaker one.",
+    { x: table.width - 1.4, y: MID },
+    "ml",
+    30,
+    0.5,
+    [3, 5, 7],
+    ["Keep your head still and let the line come to you.", "Compare this with the right-hand cut: is one side harder for you?"],
+    1,
+  ),
+  potLesson(
+    "m3-long-cut",
+    8,
+    "Long cut into the corner (15°)",
+    "Pot a red into the top corner with a slight cut from distance: the shot that wins frames.",
+    { x: 1.45, y: 3.1 },
+    "tr",
+    15,
+    1.1,
+    [2, 4, 6],
+    ["At this range a tiny aiming error misses the pocket, so settle before you play.", "Roll the ball in at a moderate pace, and the pocket plays bigger."],
+    -1,
+  ),
 ];
 
 const drill = (
@@ -213,6 +240,34 @@ const m4: DrillLesson[] = [
     [3, 5, 7],
     ["Hit below the centre for backspin and follow through firmly.", "More pace and a lower tip draw the cue ball further."],
   ),
+  drill(
+    "m4-run-through",
+    "4",
+    "Cue-ball control",
+    4,
+    "Long follow: run through",
+    "Pot the red and let the cue ball run on a long way, into a target near the far side.",
+    { x: 0.65, y: MID },
+    "mr",
+    0.3,
+    ({ ghost, u }) => ({ x: ghost.x + u.x * 0.6, y: ghost.y + u.y * 0.6, radius: 0.18 }),
+    [2, 4, 6],
+    ["A high tip and a firmer stroke carry the cue ball further.", "Judge the pace by the cue ball, not the red."],
+  ),
+  drill(
+    "m4-deep-screw",
+    "4",
+    "Cue-ball control",
+    5,
+    "Deep screw: a long way back",
+    "Pot the red and screw the cue ball back past where it started.",
+    straight,
+    "mr",
+    0.3,
+    ({ ghost, u }) => ({ x: ghost.x - u.x * 0.55, y: ghost.y - u.y * 0.55, radius: 0.2 }),
+    [2, 4, 6],
+    ["Get low on the cue ball and accelerate through it.", "Distance back comes from spin, so do not just hit harder."],
+  ),
 ];
 
 const m8: DrillLesson[] = [
@@ -236,6 +291,30 @@ const m8: DrillLesson[] = [
       tips: ["The black is potted from here again and again in a frame, so repeating it builds a reliable routine."],
     } satisfies DrillLesson;
   })(),
+  ...(
+    [
+      ["m8-pink-spot", 2, "Pink off its spot", "pink", "tl", 0, "Pot the pink from its spot into the top corner, the shot before the black in a clearance."],
+      ["m8-blue-middle", 3, "Blue into the middle", "blue", "mr", 10, "Pot the blue from its spot into the middle pocket, a key shot when building a break."],
+    ] as const
+  ).map(([id, order, title, ball, pocket, cut, goal]): DrillLesson => {
+    const { striker } = cutLayout(colourSpots(table)[ball], pocket, cut, 0.55);
+    return {
+      ...common,
+      id,
+      module: "8",
+      moduleTitle: "Practice routines",
+      order,
+      title,
+      goal,
+      layout: [
+        { id: "white", ...striker },
+        { id: ball, spot: ball },
+      ],
+      success: { pot: { ball, pockets: [pocket] } },
+      stars: [3, 5, 7],
+      tips: ["Play it the same way every time, so the routine holds up under pressure."],
+    };
+  }),
 ];
 
 export const drillLessons: DrillLesson[] = [...m3, ...m4, ...m8];

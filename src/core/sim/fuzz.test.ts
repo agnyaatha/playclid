@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { carrom } from "@/games/carrom";
 import { pool } from "@/games/pool";
 import { snooker } from "@/games/snooker";
+import { billiards } from "@/games/billiards";
+import { nineball } from "@/games/nineball";
+import { crokinole } from "@/games/crokinole";
+import { shuffleboard } from "@/games/shuffleboard";
+import { threecushion } from "@/games/threecushion";
 import { makeRng } from "../ai/rng";
 import type { Game } from "../game";
 import type { Body } from "../types";
@@ -59,6 +64,11 @@ describe.each([
   ["snooker", snooker],
   ["pool", pool],
   ["carrom", carrom],
+  ["9-ball", nineball],
+  ["billiards", billiards],
+  ["three-cushion", threecushion],
+  ["shuffleboard", shuffleboard],
+  ["crokinole", crokinole],
 ] as const)("%s physics invariants over random play", (_name, game) => {
   it("never loses a ball, overlaps, gains energy, or fails to come to rest", () => {
     const { problems, maxEvents } = fuzz(game, 400, 2026);

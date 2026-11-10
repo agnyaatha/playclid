@@ -13,7 +13,7 @@ const named = (name: string) => group.children.filter((o) => o.name === name) as
 describe("3D table geometry", () => {
   it("has the expected parts", () => {
     expect(named("cloth")).toHaveLength(1);
-    expect(named("rail")).toHaveLength(4);
+    expect(named("rail")).toHaveLength(1);
     expect(named("pocket")).toHaveLength(6);
     expect(named("cushion")).toHaveLength(6);
   });

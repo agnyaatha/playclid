@@ -6,10 +6,13 @@ import type { Body } from "@/core/types";
 import { snooker, snookerShot } from "@/games/snooker";
 import { snookerTheme } from "@/games/snooker/theme";
 import { TableCanvas } from "@/views/2d/TableCanvas";
+import { styleTable } from "@/views/appearance";
 import type { PaintFn } from "@/views/paint";
+import { useAppTheme } from "./ThemeButton";
 
 /** The landing page's signature: the real engine playing break-offs on a loop. Static under reduced motion. */
 export function HeroTable() {
+  const { theme, colourTable } = useAppTheme();
   const table = useMemo(() => snooker.createTable(), []);
   const start = useMemo(() => snooker.createInitialBodies(table), [table]);
   const paintRef = useRef<PaintFn | null>(null);
@@ -49,7 +52,7 @@ export function HeroTable() {
 
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0">
-      <TableCanvas table={table} theme={snookerTheme} strikerId="white" bodies={start} displayRef={displayRef} paintRef={paintRef} label="" />
+      <TableCanvas table={table} theme={styleTable(snookerTheme, theme, colourTable)} strikerId="white" bodies={start} displayRef={displayRef} paintRef={paintRef} label="" />
     </div>
   );
 }

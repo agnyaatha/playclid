@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import type { Body, ShotResult } from "@/core/types";
 import { carrom } from "./index";
-import { startingBodies } from "./layout";
+import { startingBodies, strikerStart } from "./layout";
 import { carromRules, judgeShot, newFrame, type CarromState } from "./rules";
 
 const state = (o: Partial<CarromState> = {}): CarromState => ({ ...newFrame(), ...o });
@@ -69,6 +70,41 @@ describe("carrom rules engine", () => {
     expect(t.filter((x) => x.id.startsWith("w"))).toHaveLength(9);
     expect(t.find((x) => x.id === "queen")?.value).toBe(3);
     expect(t.some((x) => x.id.startsWith("b"))).toBe(false);
+  });
+
+  const finished = (final: Body[], ...potted: string[]): ShotResult => ({
+    initial: final,
+    events: potted.map((body) => ({ type: "pocket" as const, t: 1, body, pocket: "bl" })),
+    keyframes: [],
+    duration: 1,
+    final,
+  });
+
+  it("puts a forfeited coin back on the board, so the frame can still be won", () => {
+    const final = bodies.map((b) => (b.id === "w1" || b.id === "striker" ? { ...b, state: "pocketed" as const } : b));
+    const j = carromRules.judge(state({ coins: [1, 0], scores: [1, 0] }), finished(final, "striker"), { table });
+    expect((j.state as CarromState).coins[0]).toBe(0);
+    expect(j.bodies.find((b) => b.id === "w1")!.state).toBe("stationary");
+  });
+
+  it("brings the striker back clear of a coin resting on the baseline", () => {
+    const mid = strikerStart(table).position;
+    const final = bodies.map((b) => (b.id === "w1" ? { ...b, position: { ...mid } } : b));
+    const j = carromRules.judge(newFrame(), finished(final), { table });
+    const striker = j.bodies.find((b) => b.id === "striker")!;
+    const coin = j.bodies.find((b) => b.id === "w1")!;
+    expect(Math.hypot(striker.position.x - coin.position.x, striker.position.y - coin.position.y)).toBeGreaterThanOrEqual(striker.radius + coin.radius);
+  });
+
+  it("keeps a placed striker on its baseline range and off nearby coins", () => {
+    const start = strikerStart(table).position;
+    const coin = { ...bodies.find((b) => b.id === "w1")!, position: { ...start, x: start.x + 0.1 } };
+    const set = bodies.map((b) => (b.id === "w1" ? coin : b));
+    const controls = { aim: 0, power: 0, spinX: 0.1 / 0.22, spinY: 0 };
+    const x = carrom.place!(set, controls).find((b) => b.id === "striker")!.position.x;
+    expect(Math.abs(x - coin.position.x)).toBeGreaterThanOrEqual(coin.radius + 0.0205);
+    const far = carrom.place!(bodies.map((b) => (b.id === "striker" ? { ...b, position: { ...start, x: start.x + 0.2 } } : b)), { ...controls, spinX: 1 });
+    expect(Math.abs(far.find((b) => b.id === "striker")!.position.x - table.width / 2)).toBeLessThanOrEqual(0.22);
   });
 
   it("is wired into the game and judges a simulated flick", () => {

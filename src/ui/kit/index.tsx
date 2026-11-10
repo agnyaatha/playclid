@@ -1,13 +1,51 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 
-export function Stars({ n, size = "text-base" }: { n: number; size?: string }) {
+export function Stars({ n, size = "text-base", animate = false }: { n: number; size?: string; animate?: boolean }) {
   return (
     <span role="img" aria-label={`${n} of 3 stars`} className={`${size} leading-none tracking-tight text-brass`}>
-      {"★".repeat(n)}
+      {Array.from({ length: n }, (_, i) => (
+        <span key={i} className={animate ? "fx-star" : undefined} style={animate ? { animationDelay: `${0.15 + i * 0.25}s` } : undefined}>
+          ★
+        </span>
+      ))}
       <span className="text-raised">{"★".repeat(3 - n)}</span>
     </span>
+  );
+}
+
+/** A modal on the native dialog: a drawer from the right by default, or a centred card. */
+export function Sheet({ open, onClose, title, centre = false, children }: { open: boolean; onClose: () => void; title: string; centre?: boolean; children: ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const d = ref.current;
+    if (!d) return;
+    if (open && !d.open) d.showModal();
+    else if (!open && d.open) d.close();
+  }, [open]);
+  return (
+    <dialog
+      ref={ref}
+      className={`sheet ${centre ? "sheet-centre" : ""}`}
+      aria-label={title}
+      onClose={onClose}
+      onClick={(e) => {
+        if (e.target === ref.current) onClose();
+      }}
+    >
+      {open && (
+        <div className="flex flex-col gap-4 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="display text-xl font-semibold">{title}</h2>
+            <button type="button" className="btn btn-quiet !min-h-9" onClick={onClose}>
+              Close
+            </button>
+          </div>
+          {children}
+        </div>
+      )}
+    </dialog>
   );
 }
 

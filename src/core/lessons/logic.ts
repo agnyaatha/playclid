@@ -1,5 +1,6 @@
 import type { Game } from "../game";
 import type { Body, ShotResult, Table } from "../types";
+import { scanCannon } from "./cannon";
 import type { AidName, BreakLesson, DrillLesson, Lesson } from "./schema";
 
 export const totalAttempts = (l: DrillLesson) => l.practiceAttempts + l.testAttempts;
@@ -45,7 +46,16 @@ export function evaluateShot(lesson: DrillLesson, result: ShotResult, strikerId:
       reasons.push(wrongPocket ? "The ball went in the wrong pocket." : "The ball was not potted.");
     }
   }
-  if (scratch) reasons.push("The cue ball was potted.");
+  const scan = scanCannon(result, strikerId);
+  const scratchWanted = !!lesson.success.inOff || pot?.ball === strikerId;
+  if (scratch && !scratchWanted) reasons.push("The cue ball was potted.");
+
+  const inOffMade = !lesson.success.inOff || (!!scratch && scan.hit.length > 0);
+  if (!inOffMade) reasons.push("The cue ball did not go in off a ball.");
+
+  const { cannon } = lesson.success;
+  const cannonMade = !cannon || (scan.made && scan.cushions >= cannon.cushions);
+  if (!cannonMade) reasons.push(scan.made ? `It needed ${cannon!.cushions} cushions before the second ball, and touched ${scan.cushions}.` : "The cue ball did not hit both balls.");
 
   let zoneDistance: number | null = null;
   let inZone = true;
@@ -59,7 +69,7 @@ export function evaluateShot(lesson: DrillLesson, result: ShotResult, strikerId:
     }
   }
 
-  return { success: potted && !scratch && inZone, potted: !!pot && potted, scratch: !!scratch, zoneDistance, reasons };
+  return { success: potted && (!scratch || scratchWanted) && inZone && inOffMade && cannonMade, potted: !!pot && potted, scratch: !!scratch, zoneDistance, reasons };
 }
 
 export function starsFor(lesson: DrillLesson, successes: number): 0 | 1 | 2 | 3 {
@@ -124,8 +134,8 @@ function validateLayout(game: Game, table: Table, lesson: DrillLesson | BreakLes
     if (!game.rules) problems.push("break lessons need a game with rules");
     return problems;
   }
-  const { pot, zone } = lesson.success;
-  if (!pot && !zone) problems.push("no success criteria");
+  const { pot, zone, cannon, inOff } = lesson.success;
+  if (!pot && !zone && !cannon && !inOff) problems.push("no success criteria");
   if (pot && !ids.has(pot.ball)) problems.push(`target ball "${pot.ball}" is not in the layout`);
   if (pot?.pockets) for (const p of pot.pockets) if (!table.pockets.some((k) => k.id === p)) problems.push(`unknown pocket "${p}"`);
   if (lesson.practiceAttempts < 1 || lesson.testAttempts < 0) problems.push("bad attempt counts");
