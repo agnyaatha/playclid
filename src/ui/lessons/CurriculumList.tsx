@@ -32,7 +32,7 @@ export function CurriculumList({ gameId }: { gameId: GameId }) {
         <div className="mt-6 flex items-center gap-4">
           <svg viewBox="0 0 100 100" className="h-24 w-24 -rotate-90" role="img" aria-label={`${pct}% complete`}>
             <circle cx="50" cy="50" r="44" fill="none" stroke="var(--raised)" strokeWidth="6" />
-            <circle cx="50" cy="50" r="44" fill="none" stroke="var(--brass)" strokeWidth="6" strokeLinecap="round" strokeDasharray={`${(pct / 100) * ring} ${ring}`} />
+            <circle className="ring-fill" cx="50" cy="50" r="44" fill="none" stroke="var(--brass)" strokeWidth="6" strokeLinecap="round" strokeDasharray={`${(pct / 100) * ring} ${ring}`} />
           </svg>
           <p className="text-sm text-muted">
             <span className="display block text-3xl font-semibold text-ivory tabular-nums">

@@ -1,0 +1,3 @@
+#!/bin/sh
+# Production checks before every commit. See docs/development/checks.md.
+exec node scripts/precommit.mjs

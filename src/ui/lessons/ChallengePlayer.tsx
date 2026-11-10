@@ -15,7 +15,7 @@ import { PlaybackControls } from "../controls/PlaybackControls";
 import { ShotControls } from "../controls/ShotControls";
 import { tableFx } from "../fx/bus";
 import { sound } from "../fx/sound";
-import { Stars } from "../kit";
+import { Stars, Thinking } from "../kit";
 import { TableOverlay } from "../TableOverlay";
 import { TableTools } from "../TableTools";
 import { useAdvisor } from "../useAdvisor";
@@ -132,9 +132,9 @@ export function ChallengePlayer({ gameId, challenge, nextHref }: { gameId: GameI
               {remaining} shot{remaining === 1 ? "" : "s"} left
             </span>
           </div>
-          <ol className="mt-1.5 flex items-center gap-1" aria-label="Shots">
+          <ol className="mt-2 flex items-center gap-1.5" aria-label="Shots">
             {Array.from({ length: challenge.shots }, (_, i) => (
-              <li key={i} className={`h-1.5 flex-1 rounded-full ${i < used ? "bg-raised" : "bg-brass"}`} />
+              <li key={i} className={`shot-ball ${i < used ? "shot-gone" : ""}`} />
             ))}
           </ol>
         </div>
@@ -173,14 +173,14 @@ export function ChallengePlayer({ gameId, challenge, nextHref }: { gameId: GameI
             <div className="dock-body">
               <ShotControls input={input} controls={controls} onChange={patch} availableAids={[]} aids={session.aids} onAids={session.setAids} />
               <button type="button" className="btn btn-ghost" disabled={!canShoot || hintUsed} onClick={() => void hint()}>
-                {thinking ? "Reading the table…" : hintUsed ? "Hint used" : "Use your one hint"}
+                {thinking ? <Thinking label="Reading the table" /> : hintUsed ? "Hint used" : "Use your one hint"}
               </button>
             </div>
             <div className="dock-foot">
               <p className="min-h-9 text-[0.8125rem] leading-snug text-muted" aria-live="polite">
                 {message}
               </p>
-              <button type="button" disabled={!canShoot} onClick={shoot} className="btn btn-primary !min-h-12 text-base">
+              <button type="button" disabled={!canShoot} onClick={shoot} data-flick={session.tableProps.theme.shape === "disc" || undefined} className="btn btn-primary btn-shoot !min-h-12 text-base">
                 Shoot
               </button>
               <PlaybackControls playing={playing} speed={speed} onSpeed={setSpeed} onSkip={skip} canReplay={!!lastResult} onReplay={() => lastResult && play(lastResult)}>

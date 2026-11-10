@@ -14,7 +14,7 @@ import { PlaybackControls } from "./controls/PlaybackControls";
 import { ShotControls } from "./controls/ShotControls";
 import { tableFx } from "./fx/bus";
 import { sound } from "./fx/sound";
-import { Field, Segmented, Sheet, Toggle } from "./kit";
+import { Field, Segmented, Sheet, Thinking, Toggle } from "./kit";
 import { Scoreboard } from "./Scoreboard";
 import { SessionPanel } from "./SessionPanel";
 import { TableBanner, TableOverlay } from "./TableOverlay";
@@ -242,7 +242,7 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
           tools={<TableTools session={session} />}
         >
           <TableOverlay session={session} />
-          {computersTurn && thinking && !playing && <TableBanner tone="note">{previewing ? "The computer lines up its shot" : <span className="dots">The computer is thinking</span>}</TableBanner>}
+          {computersTurn && thinking && !playing && <TableBanner tone="note">{previewing ? "The computer lines up its shot" : <Thinking label="The computer is thinking" />}</TableBanner>}
           {!playing && !computersTurn && !bannerHidden && !board?.over && (foul || missOffered || (inHand && game.placeStriker)) && (
             <TableBanner tone={foul ? "bad" : "note"} title={foul ? "Foul" : undefined} onClose={() => setBannerHidden(true)}>
               {foul && <p>{foul.replace(/^Foul:\s*/, "")}</p>}
@@ -304,7 +304,7 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
                 </div>
               </Field>
               <button type="button" className="btn btn-ghost" disabled={!canShoot} onClick={() => void suggest()}>
-                {thinking ? "Thinking…" : "Suggest a shot"}
+                {thinking ? <Thinking label="Thinking" /> : "Suggest a shot"}
               </button>
             </>
           )}
@@ -321,7 +321,7 @@ export function PracticeTable({ gameId }: { gameId: GameId }) {
           <p className="min-h-9 text-[0.8125rem] leading-snug text-muted" aria-live="polite">
             {foul && !bannerHidden ? "" : message}
           </p>
-          <button type="button" disabled={!canShoot} onClick={shoot} className="btn btn-primary !min-h-12 text-base">
+          <button type="button" disabled={!canShoot} onClick={shoot} data-flick={session.tableProps.theme.shape === "disc" || undefined} className="btn btn-primary btn-shoot !min-h-12 text-base">
             Shoot
           </button>
           <PlaybackControls playing={playing} speed={speed} onSpeed={setSpeed} onSkip={skip} canReplay={!!lastResult} onReplay={() => lastResult && play(lastResult)}>

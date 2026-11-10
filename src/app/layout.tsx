@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow, Barlow_Condensed } from "next/font/google";
+import { ButtonEffects } from "@/ui/ButtonEffects";
 import { RegisterServiceWorker } from "@/ui/RegisterServiceWorker";
 import { SiteHeader } from "@/ui/SiteHeader";
 import "./globals.css";
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="flex min-h-full flex-col">
         <RegisterServiceWorker />
+        <ButtonEffects />
         <SiteHeader />
         {children}
       </body>

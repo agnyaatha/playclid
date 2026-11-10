@@ -1,7 +1,7 @@
 import type { WatchLesson } from "@/core/lessons/schema";
 
 /**
- * One watch-and-practise lesson per module of the 8-week beginner curriculum (docs/Learn Snooker and Pool on YouTube).
+ * One watch-and-practise lesson per module of the 8-week beginner curriculum (docs/research/youtube-beginner-playlist.md).
  * Videos are external links, never embedded. Tags: S = snooker, P = pool, B = both.
  */
 export const watchLessons: WatchLesson[] = [

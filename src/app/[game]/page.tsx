@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { RouteLoader } from "@/ui/loading/RouteLoader";
 import { GAMES, findGame } from "@/games/registry";
 import { CurriculumList } from "@/ui/lessons/CurriculumList";
 
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: { params: Params }) {
 export default function GameHub({ params }: { params: Params }) {
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10 sm:px-8 lg:py-14">
-      <Suspense fallback={<p className="text-muted">Loading…</p>}>
+      <Suspense fallback={<RouteLoader />}>
         <Hub params={params} />
       </Suspense>
     </main>

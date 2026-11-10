@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { RouteLoader } from "@/ui/loading/RouteLoader";
 import { GAMES, findGame } from "@/games/registry";
 import { ChallengePlayer } from "@/ui/lessons/ChallengePlayer";
 
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: Params }) {
 export default function ChallengePage({ params }: { params: Params }) {
   return (
     <main className="flex flex-1 flex-col">
-      <Suspense fallback={<p className="p-6 text-muted">Setting up the table…</p>}>
+      <Suspense fallback={<RouteLoader />}>
         <ChallengeContent params={params} />
       </Suspense>
     </main>

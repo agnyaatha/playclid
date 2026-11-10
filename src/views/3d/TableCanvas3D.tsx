@@ -6,6 +6,7 @@ import type { Marker, Scene } from "../2d/draw";
 import type { PullHandlers } from "../2d/TableCanvas";
 import type { GameTheme } from "../2d/theme";
 import type { Project } from "@/ui/fx/bus";
+import { TableLoader } from "@/ui/loading/TableLoader";
 import type { PaintFn } from "../paint";
 import type { CameraMode } from "./camera";
 import type { Scene3D } from "./Scene3D";
@@ -176,6 +177,11 @@ export function TableCanvas3D({ table, theme, strikerId, bodies, displayRef, aim
 
   return (
     <div ref={boxRef} className="absolute inset-0">
+      {!ready && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <TableLoader shape={theme.shape} label="Building the 3D table" compact />
+        </div>
+      )}
       <canvas
         ref={canvasRef}
         className={`absolute inset-0 h-full w-full touch-none transition-opacity duration-300 ${ready ? "opacity-100" : "opacity-0"}`}

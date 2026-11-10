@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { GameId } from "@/core/game";
 import { ballName } from "@/core/lessons/insight";
 import { aidsForAttempt, buildLessonBodies, evaluateShot, isTestAttempt, starsFor, totalAttempts } from "@/core/lessons/logic";
@@ -16,7 +16,7 @@ import { PlaybackControls } from "../controls/PlaybackControls";
 import { ShotControls } from "../controls/ShotControls";
 import { prefersReducedMotion, tableFx } from "../fx/bus";
 import { sound } from "../fx/sound";
-import { Callout, Segmented, Stars } from "../kit";
+import { Callout, Segmented, Stars, Thinking } from "../kit";
 import { TableBanner, TableOverlay } from "../TableOverlay";
 import { TableTools } from "../TableTools";
 import { useAdvisor } from "../useAdvisor";
@@ -108,8 +108,8 @@ export function DrillPlayer({ gameId, lesson, nextHref }: { gameId: GameId; less
   const targetName = lesson.success.pot ? ballName(lesson.success.pot.ball) : "ball";
   const striker = input.tipOffset ? "cue ball" : "striker";
   const spin = input.tipOffset && demo.plan ? (demo.plan.spinY > 0.05 ? " The tip is set high, for follow." : demo.plan.spinY < -0.05 ? " The tip is set low, for draw." : "") : "";
-  const caption: Record<DemoStep, { title: string; text: string }> = {
-    prepare: { title: "Watch how it's done", text: "Working out a good shot from here." },
+  const caption: Record<DemoStep, { title: string; text: ReactNode }> = {
+    prepare: { title: "Watch how it's done", text: <Thinking label="Working out a good shot from here" /> },
     aim: { title: "1 · Aim", text: lesson.success.pot ? `The line runs to the ghost ball: where the ${striker} must be when it meets the ${targetName}.` : `The line shows where the ${striker} will go.` },
     power: { title: "2 · Power", text: `This shot needs about ${((demo.plan?.power ?? 0) * input.maxSpeed).toFixed(1)} m/s.${spin}` },
     shot: { title: "3 · Play it", text: lesson.success.zone ? "In slow motion. Watch where it finishes: inside the gold circle." : "In slow motion. Watch both balls after they meet." },
@@ -232,7 +232,7 @@ export function DrillPlayer({ gameId, lesson, nextHref }: { gameId: GameId; less
             {Array.from({ length: total }, (_, i) => {
               const r = results[i];
               const cls = r ? (r.success ? "bg-good" : "bg-bad") : i === attempt && !finished ? "bg-brass" : "bg-raised";
-              return <li key={i} title={r ? (r.success ? "Made" : "Missed") : "To play"} className={`h-1.5 flex-1 rounded-full ${cls} ${i === lesson.practiceAttempts ? "ml-1.5" : ""}`} />;
+              return <li key={`${i}-${r ? r.success : "open"}`} title={r ? (r.success ? "Made" : "Missed") : "To play"} className={`h-1.5 flex-1 rounded-full ${cls} ${r ? "pip-pop" : ""} ${i === lesson.practiceAttempts ? "ml-1.5" : ""}`} />;
             })}
           </ol>
         </div>
@@ -305,7 +305,7 @@ export function DrillPlayer({ gameId, lesson, nextHref }: { gameId: GameId; less
                   )}
                   {!testing && (
                     <button type="button" className="btn btn-ghost" onClick={() => void showMe()} disabled={!canShoot}>
-                      {thinking ? "Working it out…" : "Show me a good shot"}
+                      {thinking ? <Thinking label="Working it out" /> : "Show me a good shot"}
                     </button>
                   )}
                   {testing && <p className="text-sm text-muted">The coach sits out the test shots.</p>}
@@ -319,7 +319,7 @@ export function DrillPlayer({ gameId, lesson, nextHref }: { gameId: GameId; less
                   {!last.success && <p>{last.reasons.join(" ")}</p>}
                   {!last.success && (
                     <button type="button" onClick={() => void watchGoodShot()} disabled={thinking} className="btn btn-quiet !min-h-8 !px-0 text-ivory underline">
-                      {thinking ? "Working it out…" : "Watch a good shot"}
+                      {thinking ? <Thinking label="Working it out" /> : "Watch a good shot"}
                     </button>
                   )}
                 </Callout>
@@ -329,7 +329,7 @@ export function DrillPlayer({ gameId, lesson, nextHref }: { gameId: GameId; less
                   Next attempt
                 </button>
               ) : (
-                <button type="button" disabled={!canShoot} onClick={shoot} className="btn btn-primary !min-h-12 text-base">
+                <button type="button" disabled={!canShoot} onClick={shoot} data-flick={session.tableProps.theme.shape === "disc" || undefined} className="btn btn-primary btn-shoot !min-h-12 text-base">
                   Shoot
                 </button>
               )}

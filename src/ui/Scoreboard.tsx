@@ -21,7 +21,7 @@ export function Scoreboard({ board, trays, ballColour }: Props) {
             <div key={p.label} aria-current={active ? "true" : undefined} className={`flex min-w-0 flex-1 flex-col justify-center px-3 py-1.5 sm:flex-none sm:min-w-36 ${active ? "bg-brass/15" : ""} ${i > 0 ? "border-l border-line" : ""}`}>
               <div className="flex items-center justify-between gap-3">
                 <span className={`truncate text-xs ${active ? "text-ivory" : "text-muted"}`}>{p.label}</span>
-                <span className="display text-2xl font-semibold tabular-nums leading-none">{p.score}</span>
+                <span key={p.score} className="display pip-pop text-2xl font-semibold tabular-nums leading-none">{p.score}</span>
               </div>
               {trays && ballColour && (
                 <ul className="mt-1 flex h-3 items-center gap-0.5 overflow-hidden" aria-label={`Balls potted by ${p.label}`}>

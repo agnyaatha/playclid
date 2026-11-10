@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { addShot, badges, currentStreak, DAILY_GOAL, dayKey, EMPTY_ACTIVITY, isActivity, type Activity } from "@/core/progress/activity";
 import { prefsStore } from "@/core/prefs/store";
 import { usePref } from "@/core/prefs/usePref";
@@ -27,8 +28,9 @@ export function ActivityCard({ showBadges = false }: { showBadges?: boolean }) {
             {played} / {DAILY_GOAL} shots
           </span>
         </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-raised" role="progressbar" aria-label="Today's goal" aria-valuemin={0} aria-valuemax={DAILY_GOAL} aria-valuenow={Math.min(played, DAILY_GOAL)}>
-          <div className="h-full rounded-full bg-brass" style={{ width: `${pct}%` }} />
+        <div className="relative mt-3 h-1.5 rounded-full bg-raised" role="progressbar" aria-label="Today's goal" aria-valuemin={0} aria-valuemax={DAILY_GOAL} aria-valuenow={Math.min(played, DAILY_GOAL)}>
+          <div className="progress-fill h-full rounded-full bg-brass" style={{ width: `${pct}%` }} />
+          <span aria-hidden className="progress-ball" style={{ left: `${pct}%`, "--roll": `${pct * 12}deg` } as CSSProperties} />
         </div>
         <p className="mt-2 text-xs text-muted">{streak > 0 ? `${streak}-day streak` : "Play today to start a streak"}{a.bestStreak > streak ? ` · best ${a.bestStreak}` : ""}</p>
       </div>

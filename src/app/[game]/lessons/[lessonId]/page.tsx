@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { RouteLoader } from "@/ui/loading/RouteLoader";
 import { GAMES, findGame } from "@/games/registry";
 import { BreakPlayer } from "@/ui/lessons/BreakPlayer";
 import { DrillPlayer } from "@/ui/lessons/DrillPlayer";
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: { params: Params }) {
 export default function LessonPage({ params }: { params: Params }) {
   return (
     <main className="flex flex-1 flex-col">
-      <Suspense fallback={<p className="p-6 text-muted">Setting up the table…</p>}>
+      <Suspense fallback={<RouteLoader />}>
         <LessonContent params={params} />
       </Suspense>
     </main>

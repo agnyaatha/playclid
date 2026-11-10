@@ -165,8 +165,11 @@ body::after {
   transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
   cursor: pointer;
 }
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
 .btn:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: translateY(1px) scale(0.98);
 }
 .btn:disabled {
   cursor: not-allowed;
@@ -217,7 +220,38 @@ body::after {
 }
 
 /* Segmented switch */
+.seg-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: 0;
+  border-radius: 0.45rem;
+  background: var(--brass);
+}
+/* A small ball under the chosen tab, turning as the highlight rolls across. */
+.seg-thumb::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #fff 50%, #a59a80 50%);
+  transform: rotate(var(--roll, 0deg));
+}
+.seg[data-ready] .seg-thumb {
+  transition:
+    transform 0.32s cubic-bezier(0.3, 1.3, 0.5, 1),
+    width 0.32s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+.seg[data-ready] .seg-thumb::after {
+  transition: transform 0.32s ease-out;
+}
 .seg {
+  position: relative;
   display: inline-flex;
   padding: 3px;
   border-radius: 0.625rem;
@@ -235,10 +269,16 @@ body::after {
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s;
 }
+.seg button {
+  position: relative;
+}
 .seg button[aria-pressed="true"],
 .seg button[aria-selected="true"] {
   background: var(--brass);
   color: var(--on-accent);
+}
+.seg[data-placed] button[aria-pressed="true"] {
+  background: transparent;
 }
 
 /* Sliders */
@@ -291,8 +331,40 @@ body::after {
   font-size: 0.8125rem;
 }
 
+/* Checkboxes are a ball that rolls along a rail. */
 input[type="checkbox"] {
-  accent-color: var(--brass);
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 2.5rem;
+  height: 1.375rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--raised);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #fff 50%, #d8cfb8 50%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  transition: transform 0.28s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+input[type="checkbox"]:checked {
+  background: var(--brass);
+}
+input[type="checkbox"]:checked::after {
+  transform: translateX(1.125rem) rotate(360deg);
+}
+input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* The game screen: the table is the page. */
@@ -547,14 +619,27 @@ input[type="checkbox"] {
 .power-track {
   display: block;
   height: 4px;
-  overflow: hidden;
   border-radius: 2px;
   background: var(--raised);
 }
 .power-fill {
+  position: relative;
   display: block;
   height: 100%;
+  border-radius: 2px;
   background: linear-gradient(90deg, var(--good), var(--brass) 60%, var(--bad));
+}
+.power-fill::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -5px;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--chalk);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
 .table-banner {
@@ -576,22 +661,300 @@ input[type="checkbox"] {
   transform: translateX(-50%);
 }
 
-.dots::after {
-  content: "";
-  animation: dots 1.2s steps(4, end) infinite;
+/* Newton's cradle: the outer balls swing in turn while the middle three stay still. */
+.cradle {
+  display: inline-flex;
+  align-items: flex-end;
+  height: 1em;
+  padding: 0 0.45em;
 }
-@keyframes dots {
-  0% {
-    content: "";
+.cradle i {
+  width: 0.42em;
+  height: 0.42em;
+  border-radius: 50%;
+  background: currentColor;
+  transform-origin: 50% -0.55em;
+}
+.cradle i:first-child {
+  animation: cradle-left 1s ease-in-out infinite;
+}
+.cradle i:last-child {
+  animation: cradle-right 1s ease-in-out infinite;
+}
+@keyframes cradle-left {
+  0%,
+  50%,
+  100% {
+    transform: rotate(0);
   }
   25% {
-    content: ".";
+    transform: rotate(38deg);
   }
-  50% {
-    content: "..";
+}
+@keyframes cradle-right {
+  0%,
+  50%,
+  100% {
+    transform: rotate(0);
   }
   75% {
-    content: "...";
+    transform: rotate(-38deg);
+  }
+}
+
+/* Loading screen: a cue strikes a ball into a pocket, or a striker sends a coin in. */
+.table-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(20rem, 80%);
+}
+.table-loader svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.6rem;
+}
+.table-loader-compact {
+  width: min(13rem, 60%);
+}
+.load-label {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.load-cue {
+  animation: load-cue 2.4s ease-in-out infinite;
+}
+@keyframes load-cue {
+  0%,
+  8% {
+    transform: translate(0, 0);
+  }
+  26% {
+    transform: translate(-16px, 7.6px);
+  }
+  32% {
+    transform: translate(7px, -3.3px);
+  }
+  50%,
+  100% {
+    transform: translate(-30px, 14.3px);
+    opacity: 0;
+  }
+}
+.load-striker {
+  animation: load-striker 2.4s linear infinite;
+}
+@keyframes load-striker {
+  0%,
+  32% {
+    transform: translate(0, 0);
+  }
+  52%,
+  100% {
+    transform: translate(75.2px, -35.8px);
+  }
+}
+.load-target {
+  animation: load-target 2.4s ease-out infinite;
+}
+@keyframes load-target {
+  0%,
+  52% {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  78% {
+    transform: translate(72px, -34.3px);
+    opacity: 1;
+  }
+  82%,
+  100% {
+    transform: translate(72px, -34.3px);
+    opacity: 0;
+  }
+}
+.load-glow {
+  opacity: 0;
+  transform-origin: 226px 14px;
+  animation: load-glow 2.4s ease-out infinite;
+}
+@keyframes load-glow {
+  0%,
+  76% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  82% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.3);
+  }
+}
+
+/* Every press: a ring spreading from the finger, like a ball impact. */
+.btn,
+.chip,
+.tool {
+  position: relative;
+  overflow: hidden;
+}
+.fx-ripple {
+  position: absolute;
+  width: var(--size);
+  height: var(--size);
+  margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.45;
+  pointer-events: none;
+  animation: fx-ripple 0.45s ease-out forwards;
+}
+@keyframes fx-ripple {
+  from {
+    transform: scale(0.05);
+  }
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+/* Shoot: a cue slides in along the button and strikes. */
+.fx-cue {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 42%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #3a1f10, #b98a4e 60%, #efdcb0 96%, #3f7fb3);
+  pointer-events: none;
+  animation: fx-cue 0.3s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+@keyframes fx-cue {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  70% {
+    transform: translateX(10%);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(60%);
+    opacity: 0;
+  }
+}
+.fx-chalk {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #cfe3f2;
+  pointer-events: none;
+  animation: fx-chalk 0.5s ease-out forwards;
+}
+@keyframes fx-chalk {
+  to {
+    transform: translate(var(--dx), var(--dy)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* Progress shown with balls. */
+.progress-fill {
+  animation: progress-fill 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+@keyframes progress-fill {
+  from {
+    width: 0;
+  }
+}
+.progress-ball {
+  position: absolute;
+  top: 50%;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin: -0.4rem 0 0 -0.4rem;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #fff 50%, #c8322a 50%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  transform: rotate(var(--roll));
+  animation: progress-ball 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+@keyframes progress-ball {
+  from {
+    left: 0;
+    transform: rotate(0);
+  }
+}
+.ring-fill {
+  animation: ring-fill 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+@keyframes ring-fill {
+  from {
+    stroke-dasharray: 0 999;
+  }
+}
+.shot-ball {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, var(--chalk) 45%, #a59a80);
+  transition:
+    transform 0.4s cubic-bezier(0.5, 0, 0.8, 0.5),
+    opacity 0.4s ease-in;
+}
+.shot-gone {
+  opacity: 0.18;
+  transform: translateY(5px) scale(0.55);
+}
+.pip-pop {
+  animation: pip-pop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+}
+@keyframes pip-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+
+/* Between pages: the new one eases in as a ball rolls under the header. */
+.page-enter {
+  animation: page-enter 0.25s ease-out backwards;
+}
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.page-ball {
+  position: fixed;
+  top: calc(var(--header) - 5px);
+  left: 0;
+  z-index: 45;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #fff 50%, var(--brass) 50%);
+  pointer-events: none;
+  animation: page-ball 0.55s cubic-bezier(0.3, 0.6, 0.4, 1) forwards;
+}
+@keyframes page-ball {
+  from {
+    transform: translateX(-20px) rotate(0);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100vw) rotate(1440deg);
+    opacity: 0;
   }
 }
 
@@ -765,7 +1128,20 @@ kbd {
   /* These carry information, so they stay on screen instead of finishing at once. */
   .fx-toast,
   .fx-star,
-  .fx-verdict {
+  .fx-verdict,
+  .page-enter,
+  .progress-fill,
+  .progress-ball,
+  .ring-fill,
+  .pip-pop,
+  .cradle i,
+  .table-loader * {
     animation: none !important;
+  }
+  .load-glow {
+    opacity: 0;
+  }
+  .page-ball {
+    display: none;
   }
 }

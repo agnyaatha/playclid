@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { RouteLoader } from "@/ui/loading/RouteLoader";
 import { GAMES, findGame } from "@/games/registry";
 import { ChallengeList } from "@/ui/lessons/ChallengeList";
 
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: { params: Params }) {
 export default function Challenges({ params }: { params: Params }) {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-5 py-10">
-      <Suspense fallback={<p className="text-muted">Loading…</p>}>
+      <Suspense fallback={<RouteLoader />}>
         <ChallengesContent params={params} />
       </Suspense>
     </main>

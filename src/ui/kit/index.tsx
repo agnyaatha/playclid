@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from "react";
 
 export function Stars({ n, size = "text-base", animate = false }: { n: number; size?: string; animate?: boolean }) {
   return (
@@ -114,15 +114,56 @@ export function Toggle({ label, checked, disabled, onChange }: { label: string; 
   return (
     <label className="flex min-h-10 items-center justify-between gap-3 text-sm">
       <span>{label}</span>
-      <input type="checkbox" className="h-5 w-5" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
+      <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
     </label>
   );
 }
 
-/** A row of mutually exclusive tabs or modes. */
-export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; label: string }) {
+/** Five balls of a Newton's cradle clicking back and forth, for anything the player has to wait on. */
+export function Thinking({ label }: { label: string }) {
   return (
-    <div className="seg" role="group" aria-label={label}>
+    <span className="inline-flex items-center gap-2">
+      <span className="cradle" aria-hidden>
+        {[0, 1, 2, 3, 4].map((i) => (
+          <i key={i} />
+        ))}
+      </span>
+      {label}
+    </span>
+  );
+}
+
+/** A row of mutually exclusive tabs or modes, with a highlight that rolls across to the chosen one. */
+export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; label: string }) {
+  const box = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const seg = box.current;
+    if (!seg) return;
+    const place = () => {
+      const on = seg.querySelector<HTMLElement>('button[aria-pressed="true"]');
+      const thumb = seg.querySelector<HTMLElement>(".seg-thumb");
+      if (!on || !thumb) return;
+      thumb.style.width = `${on.offsetWidth}px`;
+      thumb.style.transform = `translateX(${on.offsetLeft}px)`;
+      thumb.style.setProperty("--roll", `${on.offsetLeft * 5}deg`);
+      seg.dataset.placed = "";
+    };
+    place();
+    // Only animate after the first placement has been painted, so the highlight does not sweep in on load.
+    const frame = requestAnimationFrame(() => {
+      seg.dataset.ready = "";
+    });
+    const watcher = new ResizeObserver(place);
+    watcher.observe(seg);
+    return () => {
+      cancelAnimationFrame(frame);
+      watcher.disconnect();
+    };
+  }, [value, options.length]);
+
+  return (
+    <div ref={box} className="seg" role="group" aria-label={label}>
+      <span aria-hidden className="seg-thumb" />
       {options.map((o) => (
         <button key={o.value} type="button" aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
           {o.label}

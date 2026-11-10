@@ -10,7 +10,8 @@ export interface SimParams {
     contactHeight: number;
     /**
      * "mathavan" integrates the impact through compression and restitution with slip at both the cushion and the
-     * cloth (Mathavan et al. 2010); `restitution` is then the energetic coefficient (0.98), not the rebound ratio.
+     * cloth (Mathavan et al. 2010); `restitution` is then the energetic coefficient, not the rebound ratio. The paper
+     * uses 0.98; snooker here uses 0.88, which calibrates the rebound to the measured 0.818.
      * "impulse" is a single-impulse model for flat discs.
      */
     model: "mathavan" | "impulse";

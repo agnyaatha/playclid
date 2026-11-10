@@ -150,7 +150,7 @@ export function BreakPlayer({ gameId, lesson, nextHref }: { gameId: GameId; less
               <p className="min-h-9 text-[0.8125rem] leading-snug text-muted" aria-live="polite">
                 {message}
               </p>
-              <button type="button" disabled={!canShoot} onClick={shoot} className="btn btn-primary !min-h-12 text-base">
+              <button type="button" disabled={!canShoot} onClick={shoot} data-flick={session.tableProps.theme.shape === "disc" || undefined} className="btn btn-primary btn-shoot !min-h-12 text-base">
                 Shoot
               </button>
               <PlaybackControls playing={playing} speed={speed} onSpeed={setSpeed} onSkip={skip} canReplay={!!lastResult} onReplay={() => lastResult && play(lastResult)} />
