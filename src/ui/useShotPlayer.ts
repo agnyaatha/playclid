@@ -8,6 +8,9 @@ import type { Body, ShotResult } from "@/core/types";
 import type { SimParams } from "@/core/sim/params";
 import type { PaintFn } from "@/views/paint";
 
+/** Longest real time one animation frame may advance (s). */
+const MAX_FRAME_DT = 0.1;
+
 const isSpeed = (v: unknown): v is number => v === 0.5 || v === 1 || v === 2 || v === 4;
 
 /**
@@ -37,7 +40,10 @@ export function useShotPlayer(game: Game, paintRef: MutableRefObject<PaintFn | n
       let next = 0;
       let last = performance.now();
       const step = (now: number) => {
-        const simDt = ((now - last) / 1000) * speedRef.current * rate;
+        // A frame's timestamp can precede the call that queued it, and a hidden tab pauses frames entirely: clamp the
+        // step so neither runs time backwards nor jumps the shot to its end (firing every sound at once) on return.
+        const frameDt = Math.min(Math.max((now - last) / 1000, 0), MAX_FRAME_DT);
+        const simDt = frameDt * speedRef.current * rate;
         t += simDt;
         last = now;
         // Before the end check: a shot often finishes on its last event, such as the final pot.

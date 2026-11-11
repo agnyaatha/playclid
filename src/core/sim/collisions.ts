@@ -42,17 +42,23 @@ export function resolveBallBall(a: Body, b: Body, p: SimParams): [Body, Body] {
   let wa = a.angularVelocity;
   let wb = b.angularVelocity;
 
-  // Surface slip at the contact point, projected onto the table plane and the contact tangent.
+  // Surface slip at the contact point in the contact tangent plane. It keeps its vertical part: topspin or backspin
+  // makes the surfaces slip up or down past each other, which takes a share of the friction and leaves less to throw
+  // the object ball sideways. That is why a rolling cue ball throws much less than a stun shot.
   const s = add(sub(a.velocity, b.velocity), add(scale(cross(a.angularVelocity, n), a.radius), scale(cross(b.angularVelocity, n), b.radius)));
-  let st: Vec3 = sub(s, scale(n, dot(s, n)));
-  st = { x: st.x, y: st.y, z: 0 };
+  const full = sub(s, scale(n, dot(s, n)));
+  const st: Vec3 = p.ballBall.planar ? { x: full.x, y: full.y, z: 0 } : full;
   const sm = len(st);
   if (sm > 1e-9) {
     const t = scale(st, 1 / sm);
-    const stickCap = sm / (3.5 * (1 / a.mass + 1 / b.mass));
-    const Jt = Math.min(p.ballBall.friction * Jn, stickCap);
-    va = sub(va, scale(t, Jt / a.mass));
-    vb = add(vb, scale(t, Jt / b.mass));
+    // Balls stay on the cloth, so only the horizontal part of the friction moves them; all of it turns them.
+    const th: Vec3 = { x: t.x, y: t.y, z: 0 };
+    const stickCap = sm / ((1 / a.mass + 1 / b.mass) * dot(th, th) + (a.radius * a.radius) / inertia(a) + (b.radius * b.radius) / inertia(b));
+    const curve = p.ballBall.frictionCurve;
+    const mu = curve ? curve.a + curve.b * Math.exp(-curve.c * sm) : p.ballBall.friction;
+    const Jt = Math.min(mu * Jn, stickCap);
+    va = sub(va, scale(th, Jt / a.mass));
+    vb = add(vb, scale(th, Jt / b.mass));
     wa = add(wa, scale(cross(scale(n, a.radius), scale(t, -Jt)), 1 / inertia(a)));
     wb = add(wb, scale(cross(scale(n, -b.radius), scale(t, Jt)), 1 / inertia(b)));
   }
@@ -66,7 +72,16 @@ export function resolveBallBall(a: Body, b: Body, p: SimParams): [Body, Body] {
 export function resolveCushion(ball: Body, n: Vec3, p: SimParams): Body {
   const vn = -dot(ball.velocity, n);
   if (vn < -1e-12) return ball;
-  return p.cushion.model === "mathavan" && vn > MIN_SEPARATION ? mathavanImpact(ball, n, vn, p) : impulseImpact(ball, n, Math.max(vn, 0), p);
+  const e = cushionRestitution(p, vn);
+  const q = e === p.cushion.restitution ? p : { ...p, cushion: { ...p.cushion, restitution: e } };
+  return q.cushion.model === "mathavan" && vn > MIN_SEPARATION ? mathavanImpact(ball, n, vn, q) : impulseImpact(ball, n, Math.max(vn, 0), q);
+}
+
+/** Cushion restitution at normal impact speed `vn`, lowered past the rigid-cushion limit when a falloff is set. */
+export function cushionRestitution(p: SimParams, vn: number): number {
+  const f = p.cushion.falloff;
+  if (!f || vn <= f.above) return p.cushion.restitution;
+  return Math.max(f.min, p.cushion.restitution - f.perMps * (vn - f.above));
 }
 
 /** Impulse steps through the compression phase; restitution takes proportionally fewer. */

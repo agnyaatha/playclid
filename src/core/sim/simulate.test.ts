@@ -49,6 +49,36 @@ describe("ball-ball collisions", () => {
     expect(angle).toBeLessThan(88);
   });
 
+  /** Throw of the object ball off the line of centres, in degrees, for a half-ball hit. */
+  const halfBallThrow = (v: number, rolls: boolean) => {
+    const n = { x: Math.sin(Math.PI / 6), y: Math.cos(Math.PI / 6) };
+    const a = rolls ? rolling("a", 0, 0, v) : ball("a", 0, 0, { velocity: { x: 0, y: v, z: 0 } });
+    const [, b2] = resolveBallBall(a, ball("b", n.x * 2 * R, n.y * 2 * R), P);
+    return 30 - (Math.atan2(b2.velocity.x, b2.velocity.y) * 180) / Math.PI;
+  };
+
+  it("throw follows Alciatore's measurements: about 4-5 degrees on a slow stun cut, under 2 when hit hard", () => {
+    expect(halfBallThrow(0.3, false)).toBeGreaterThan(4);
+    expect(halfBallThrow(0.3, false)).toBeLessThan(6);
+    expect(halfBallThrow(3, false)).toBeLessThan(2);
+    expect(halfBallThrow(3, false)).toBeGreaterThan(0.5);
+  });
+
+  it("a rolling cue ball throws much less than a stun shot at the same speed", () => {
+    for (const v of [0.5, 1, 2]) expect(halfBallThrow(v, true)).toBeLessThan(0.6 * halfBallThrow(v, false));
+    expect(halfBallThrow(1, true)).toBeGreaterThan(0);
+  });
+
+  it("disc games keep in-plane friction: a disc's bookkeeping roll does not change the throw", () => {
+    const disc = { ...P, ballBall: { restitution: 0.95, friction: 0.06, planar: true } };
+    const n = { x: Math.sin(Math.PI / 6), y: Math.cos(Math.PI / 6) };
+    const out = (a: Body) => resolveBallBall(a, ball("b", n.x * 2 * R, n.y * 2 * R), disc)[1].velocity;
+    const stun = out(ball("a", 0, 0, { velocity: { x: 0, y: 1, z: 0 } }));
+    const roll = out(rolling("a", 0, 0, 1));
+    expect(roll.x).toBeCloseTo(stun.x, 9);
+    expect(roll.y).toBeCloseTo(stun.y, 9);
+  });
+
   it("separating balls are left untouched", () => {
     const a = ball("a", 0, 0, { velocity: { x: 0, y: -1, z: 0 } });
     const b = ball("b", 0, 2 * R);
@@ -79,6 +109,14 @@ describe("cushions", () => {
   it("the rebound ratio does not depend on speed for a rigid cushion", () => {
     const ratio = (v: number) => -resolveCushion(into(v, 0), n, P).velocity.y / v;
     expect(ratio(2)).toBeCloseTo(ratio(0.5), 6);
+  });
+
+  it("past the rigid-cushion limit of 2.5 m/s the cushion deforms and the rebound ratio falls", () => {
+    const ratio = (v: number) => -resolveCushion(into(v, 0), n, P).velocity.y / v;
+    expect(ratio(2.5)).toBeCloseTo(ratio(1), 6);
+    expect(ratio(4)).toBeLessThan(ratio(2.5) - 0.02);
+    expect(ratio(8)).toBeLessThan(ratio(4));
+    expect(ratio(8)).toBeGreaterThan(0.55);
   });
 
   it("does not mirror: a rolling ball comes off a cushion closer to the normal than it went in", () => {

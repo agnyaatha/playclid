@@ -31,11 +31,14 @@ Game-specific numbers are in each [game's physics page](../games/README.md).
 | `cloth.muSpinning` | Spin friction about the vertical axis |
 | `cloth.g` | Gravity, 9.81 m/s² |
 | `ballBall.restitution` | Bounciness of ball-to-ball contact |
-| `ballBall.friction` | Surface friction between balls, which causes throw |
+| `ballBall.friction` | Surface friction between balls, which causes throw (when there is no curve) |
+| `ballBall.frictionCurve` | Optional speed-dependent friction, `a + b·exp(-c·slip)` |
+| `ballBall.planar` | Disc games: friction only in the table plane |
 | `cushion.restitution` | See the warning below |
 | `cushion.friction` | Friction at the cushion |
 | `cushion.contactHeight` | Contact height as a multiple of ball radius |
 | `cushion.model` | `"mathavan"` or `"impulse"` |
+| `cushion.falloff` | Optional drop in restitution above a normal speed, for hard impacts |
 
 > **`cushion.restitution` is not the rebound ratio** under the Mathavan model. It is the energetic coefficient of the impact, and the visible rebound comes out lower. See [collisions](collisions.md).
 

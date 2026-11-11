@@ -97,7 +97,8 @@ function addedLinesFromDiff() {
 }
 
 const STEPS = [
-  ["Typecheck", "npx tsc --noEmit"],
+  // typegen writes the route type helpers (LayoutProps, PageProps) that a fresh clone has not generated yet.
+  ["Typecheck", "npx next typegen && npx tsc --noEmit"],
   ["Lint", "npx eslint . --max-warnings=0"],
   ["Tests", "npx vitest run"],
   ["Production build", "npx next build"],

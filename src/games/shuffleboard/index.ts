@@ -21,7 +21,7 @@ const MAX_SPEED = 4.2;
 /** Waxed wood is slick, so a puck carries a long way; the side boards only give a modest bounce. */
 const PARAMS: SimParams = {
   cloth: { muSliding: 0.11, muRolling: 0.11, muSpinning: 0.05, g: 9.81 },
-  ballBall: { restitution: 0.85, friction: 0.03 },
+  ballBall: { restitution: 0.85, friction: 0.03, planar: true },
   cushion: { restitution: 0.45, friction: 0, contactHeight: 1, model: "impulse" },
 };
 

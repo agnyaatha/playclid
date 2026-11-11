@@ -24,7 +24,7 @@ Consequences:
 - Horizontal offset `a` gives sidespin.
 - Offsets are clamped to `maxOffset`, 0.5 of the radius, past which a miscue is likely.
 
-**Squirt:** sidespin deflects the ball away from the struck side by `squirtPerOffset × offset`. It is linear in the offset and does not depend on speed.
+**Squirt:** sidespin deflects the ball away from the struck side by `squirtPerOffset × offset`. It is linear in the offset and does not depend on speed, as Alciatore measured. Both cues use `STANDARD_SQUIRT`, 2.5° at half a radius of side, his figure for a standard shaft. A low-deflection shaft would be about 1.8° (0.063 rad per unit of offset).
 
 Not modelled: an elevated cue, so there is no swerve from cue elevation and no massé.
 

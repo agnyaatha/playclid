@@ -7,11 +7,17 @@ export interface CueParams {
   tipRestitution: number;
   /** Tip offsets are clamped to this fraction of ball radius; beyond it a miscue is likely. */
   maxOffset: number;
-  /** Squirt angle (rad) per unit of sideways offset as a fraction of R. Roughly 0.02-0.05 for light snooker cues. */
+  /**
+   * Squirt angle (rad) per unit of sideways offset as a fraction of R. Alciatore measured about 2.5° at half a radius
+   * with a standard shaft (0.087) and about 1.8° with a low-deflection shaft (0.063), close to linear in the offset.
+   */
   squirtPerOffset: number;
 }
 
-export const DEFAULT_CUE: CueParams = { cueMass: 0.5, tipRestitution: 0.75, maxOffset: 0.5, squirtPerOffset: 0.04 };
+/** Squirt per unit offset of a standard (not low-deflection) shaft: 2.5° at R/2 (Alciatore, Billiards Digest 2007). */
+export const STANDARD_SQUIRT = ((2.5 * Math.PI) / 180) / 0.5;
+
+export const DEFAULT_CUE: CueParams = { cueMass: 0.5, tipRestitution: 0.75, maxOffset: 0.5, squirtPerOffset: STANDARD_SQUIRT };
 
 /** Shot parameters as the UI provides them. Offsets are fractions of ball radius (right and up are positive). */
 export interface StrikeInput {

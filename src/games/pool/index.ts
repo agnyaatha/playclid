@@ -9,7 +9,8 @@ import { poolRules } from "./rules";
 import { createPoolTable, POOL } from "./table";
 
 export const CUE_BALL_ID = "white";
-const MAX_SPEED = 7;
+/** Cue speed at full power. Gives the cue ball about 12 m/s, the top of the range measured for pro breaks. */
+const MAX_SPEED = 9;
 
 export const pool: Game = {
   id: "pool",

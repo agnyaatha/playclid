@@ -23,17 +23,17 @@ Four unbroken cushions meet at the corners. A ball arriving in a corner touches 
 | Rolling resistance | 0.012 | Estimate |
 | Spin friction | 0.01 | Estimate, from pool |
 | Ball-ball restitution | 0.95 | Estimate, from pool |
-| Ball-ball friction | 0.06 | Estimate, from pool |
+| Ball-ball friction | Alciatore's speed curve | From pool |
 | Cushion model | Mathavan | |
-| Cushion restitution | 0.93 | Estimate, from pool. Match-table cushions are often heated and may be livelier |
+| Cushion restitution | 0.93, falling above 2.5 m/s | Estimate, from pool. Match-table cushions are often heated and may be livelier |
 | Cushion friction | 0.14 | Estimate, from pool |
-| Cushion contact height | 7/5 R | Estimate, from pool |
+| Cushion contact height | 1.27 R | Estimate, from pool (WPA nose height) |
 
 No value here has been calibrated against a real three-cushion table, so long routes round several cushions should be taken as approximate.
 
 ## Cue
 
-The pool cue. Maximum cue speed 7 m/s. Side spin matters more than in the potting games, because it changes each rebound angle.
+The pool cue. Maximum cue speed 9 m/s. Side spin matters more than in the potting games, because it changes each rebound angle.
 
 ## Scoring from physics
 

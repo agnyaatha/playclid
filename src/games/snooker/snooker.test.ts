@@ -58,6 +58,13 @@ describe("cue strike", () => {
     expect(l.velocity.x).toBeGreaterThan(0);
   });
 
+  it("squirts about 2.5 degrees at half a radius of side, as Alciatore measured for a standard shaft", () => {
+    const r = strikeBall(white(), { aim: UP, speed: 3, sideOffset: 0.5, vertOffset: 0 }).ball;
+    const deg = (Math.atan2(-r.velocity.x, r.velocity.y) * 180) / Math.PI;
+    expect(deg).toBeGreaterThan(2.3);
+    expect(deg).toBeLessThan(2.7);
+  });
+
   it("clamps offsets beyond 0.5R (the miscue limit) onto the limit circle", () => {
     const { ball, clamped } = strikeBall(white(), { aim: UP, speed: 3, sideOffset: 0.9, vertOffset: 0.9 });
     const limit = strikeBall(white(), { aim: UP, speed: 3, sideOffset: 0.5 * Math.SQRT1_2, vertOffset: 0.5 * Math.SQRT1_2 }).ball;

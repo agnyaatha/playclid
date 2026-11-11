@@ -23,7 +23,7 @@ const ARC = 1;
 
 const PARAMS: SimParams = {
   cloth: { muSliding: 0.12, muRolling: 0.12, muSpinning: 0.05, g: 9.81 },
-  ballBall: { restitution: 0.9, friction: 0.03 },
+  ballBall: { restitution: 0.9, friction: 0.03, planar: true },
   cushion: { restitution: 0.45, friction: 0.1, contactHeight: 1, model: "impulse" },
 };
 
