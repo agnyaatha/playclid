@@ -79,3 +79,7 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, three.js for the 
 ## License
 
 [MIT](LICENSE). You may use, change and share the code, including commercially, as long as the copyright notice stays with it.
+
+**Third-party.** The Barlow and Barlow Condensed fonts are under the [SIL Open Font License 1.1](https://openfontlicense.org). Next.js, React, three.js and the other dependencies keep their own permissive licences, listed in each package; the dependency review check blocks any pull request that adds an incompatible one. The lessons link to videos on YouTube, which belong to their creators and are not part of this repository.
+
+**Name and logo.** The MIT licence covers the code. It does not grant use of the PlayClid name or icon, so if you publish a fork, please give it a different name and logo.
