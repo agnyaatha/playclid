@@ -18,7 +18,9 @@ export type EventName =
   /** A lesson, drill, challenge or watch lesson was finished and saved to progress. */
   | "activity_complete"
   /** The table view was switched between 2D and 3D. */
-  | "view_change";
+  | "view_change"
+  /** A visitor shared a link to the app (GA4's recommended event name). */
+  | "share";
 
 type Params = Record<string, string | number | boolean>;
 

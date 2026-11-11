@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { pageMetadata } from "@/core/site";
 import { Suspense } from "react";
 import { RouteLoader } from "@/ui/loading/RouteLoader";
 import { GAMES, findGame } from "@/games/registry";
@@ -12,7 +13,9 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Params }) {
   const entry = findGame((await params).game);
-  return { title: entry ? `${entry.game.name} stats` : "Not found" };
+  if (!entry) return { title: "Not found" };
+  // Stats are the visitor's own progress, stored on their device: nothing for a search engine to show.
+  return pageMetadata({ title: `${entry.game.name} stats`, description: `Your ${entry.game.name} progress and shot statistics.`, path: `/${entry.id}/stats`, game: entry.id, index: false });
 }
 
 export default function Stats({ params }: { params: Params }) {

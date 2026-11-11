@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { pageMetadata } from "@/core/site";
 import { Suspense } from "react";
 import { RouteLoader } from "@/ui/loading/RouteLoader";
 import { GAMES, findGame } from "@/games/registry";
@@ -12,7 +13,12 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Params }) {
   const entry = findGame((await params).game);
-  return { title: entry ? `${entry.game.name} challenges` : "Not found" };
+  if (!entry) return { title: "Not found" };
+  return pageMetadata({
+    title: `${entry.game.name} challenges`,
+    description: `${entry.challenges.length} ${entry.game.name} puzzles: clear the balls in a set number of shots, from warm-ups to hard. Free, in your browser.`,
+    path: `/${entry.id}/challenges`, game: entry.id,
+  });
 }
 
 export default function Challenges({ params }: { params: Params }) {

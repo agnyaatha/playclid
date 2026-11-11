@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { pageMetadata } from "@/core/site";
 import { Suspense } from "react";
 import { RouteLoader } from "@/ui/loading/RouteLoader";
 import { GAMES, findGame } from "@/games/registry";
@@ -12,7 +13,12 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Params }) {
   const entry = findGame((await params).game);
-  return { title: entry ? `${entry.game.name} practice` : "Not found" };
+  if (!entry) return { title: "Not found" };
+  return pageMetadata({
+    title: `${entry.game.name} practice table`,
+    description: `Play ${entry.game.name} online on a free practice table with real ball physics, aiming guides and a coach. ${entry.blurb}`,
+    path: `/${entry.id}/practice`, game: entry.id,
+  });
 }
 
 export default function Practice({ params }: { params: Params }) {

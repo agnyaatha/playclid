@@ -33,3 +33,5 @@ Start at [docs/README.md](docs/README.md). The most used pages:
 - [Each game's rules and physics](docs/games/README.md)
 - [Adding a new game](docs/architecture/adding-a-game.md)
 - [Pre-commit checks](docs/development/checks.md)
+- [Deploying on Vercel, and search](docs/development/deploy-and-seo.md)
+- [Usage analytics](docs/development/analytics.md)

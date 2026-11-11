@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { pageMetadata } from "@/core/site";
 import { Suspense } from "react";
 import { RouteLoader } from "@/ui/loading/RouteLoader";
 import { GAMES, findGame } from "@/games/registry";
@@ -12,8 +13,14 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Params }) {
   const { game, challengeId } = await params;
-  const challenge = findGame(game)?.challenges.find((c) => c.id === challengeId);
-  return { title: challenge?.title ?? "Not found" };
+  const entry = findGame(game);
+  const challenge = entry?.challenges.find((c) => c.id === challengeId);
+  if (!entry || !challenge) return { title: "Not found" };
+  return pageMetadata({
+    title: `${challenge.title} · ${entry.game.name} challenge`,
+    description: `${challenge.goal} You have ${challenge.shots} shot${challenge.shots === 1 ? "" : "s"}. A free ${entry.game.name} puzzle on a real physics table.`,
+    path: `/${entry.id}/challenges/${challenge.id}`, game: entry.id,
+  });
 }
 
 export default function ChallengePage({ params }: { params: Params }) {

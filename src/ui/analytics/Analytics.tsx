@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Script from "next/script";
 import { useSyncExternalStore } from "react";
 import { usePref } from "@/core/prefs/usePref";
@@ -47,7 +48,10 @@ export function Analytics() {
       <div className="flex flex-col gap-3 rounded-xl border border-line bg-ink p-4 text-sm shadow-lg">
         <p>
           Can we count visits and which parts of Table Craft you use? It helps us decide what to improve. We use Google
-          Analytics cookies only if you agree, and never for ads. You can change this in Settings.
+          Analytics cookies only if you agree, and never for ads. You can change this at any time.{" "}
+          <Link href="/privacy" className="text-brass underline">
+            Privacy
+          </Link>
         </p>
         <div className="flex justify-end gap-2">
           <button type="button" className="chip cursor-pointer" onClick={() => setConsent("denied")}>
