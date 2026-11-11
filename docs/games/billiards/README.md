@@ -25,4 +25,4 @@ Potted balls come back: the red to the billiards spot, the opponent's ball to th
 
 ## Content
 
-Drills for each way of scoring, in `index.ts`.
+A reading lesson on the game and its three scoring shots, then drills for each way of scoring, in `index.ts`.

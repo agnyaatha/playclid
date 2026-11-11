@@ -26,4 +26,4 @@ No computer opponent or practice-table coach. The drills' "show me" search does 
 
 ## Content
 
-Four drills in `index.ts`.
+A reading lesson on the rings, the hitting rule and the basic shots, then four drills in `index.ts`.

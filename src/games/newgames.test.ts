@@ -17,7 +17,7 @@ const lessonsOf: Array<[string, Game, Lesson[]]> = [
 
 describe.each(lessonsOf)("%s exercises", (_n, game, lessons) => {
   const table = game.createTable();
-  it.each(lessons.map((l) => [l.id, l] as const))("%s is valid and can be made", (_id, lesson) => {
+  it.each(lessons.filter((l) => l.kind === "drill").map((l) => [l.id, l] as const))("%s is valid and can be made", (_id, lesson) => {
     expect(validateLesson(game, table, lesson)).toEqual([]);
     expect(findSolution(game, table, lesson as DrillLesson), "no passing shot").not.toBeNull();
   }, 60_000);

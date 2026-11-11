@@ -18,4 +18,4 @@ There is no push-out, no three-foul rule and no break requirements.
 
 ## Content
 
-Four drills and nine challenges in `content.ts`.
+A reading lesson on rotation rules, then four drills and nine challenges in `content.ts`.

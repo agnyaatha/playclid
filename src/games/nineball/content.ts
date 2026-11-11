@@ -1,7 +1,9 @@
 import { makeChallenges } from "@/core/lessons/challenges";
 import { cutLayout } from "@/core/lessons/geometry";
-import type { AidName, Lesson } from "@/core/lessons/schema";
+import { layoutOf } from "@/core/lessons/demo";
+import type { AidName, Lesson, WatchLesson } from "@/core/lessons/schema";
 import { createPoolTable, POOL } from "@/games/pool/table";
+import { nineball } from "./index";
 
 const table = createPoolTable();
 const MID = table.length / 2;
@@ -17,7 +19,71 @@ const common: { kind: "drill"; gameId: "nineball"; aids: AidName[]; practiceAtte
 
 const white = (ball: { x: number; y: number }, pocket: string, cut: number, distance: number, side: 1 | -1 = 1) => cutLayout(table, POOL.ballRadius, ball, pocket, cut, distance, side);
 
+const learn: WatchLesson = {
+  kind: "watch",
+  id: "n0-learn",
+  gameId: "nineball",
+  module: "0",
+  moduleTitle: "How 9-ball works",
+  order: 0,
+  title: "Rotation: lowest ball first",
+  goal: "Know the rack, the one rule that shapes every shot, and how the 9 wins.",
+  videos: [],
+  notes: [
+    {
+      heading: "The rack",
+      body: [
+        "9-ball uses the cue ball and the balls numbered 1 to 9, racked in a diamond. The 1 is at the front on the foot spot, the 9 is in the middle, and the others go anywhere. You break from behind the head string (the baulk line).",
+      ],
+      demo: { caption: "The diamond rack: the 1 at the front, the 9 in the middle.", layout: layoutOf(nineball.createInitialBodies(table)) },
+    },
+    {
+      heading: "Hit the lowest ball first",
+      body: [
+        "On every shot, the cue ball must hit the lowest numbered ball on the table first. After that legal contact, any ball that drops counts, and you keep playing. You do not have to pot the lowest ball; you only have to hit it first.",
+        "After contact, a ball must be potted or some ball (the cue ball included) must reach a cushion. Otherwise it is a foul.",
+      ],
+      demo: {
+        caption: "The 1 is the lowest ball, so it must be hit first. Here it is potted, and the 2 is left alone.",
+        layout: [
+          { id: "white", ...white({ x: 0.95, y: 2.0 }, "tr", 0, 0.6).striker },
+          { id: "ball1", x: 0.95, y: 2.0 },
+          { id: "ball2", x: 0.3, y: 1.1 },
+        ],
+        shot: { aim: { pot: "ball1", pocket: "tr" }, power: 0.12, spin: { y: -0.3 } },
+      },
+    },
+    {
+      heading: "The 9 wins",
+      body: [
+        "Whoever legally pots the 9 wins the rack, whenever it happens. Usually that is at the end of a run through all nine balls, but a combination counts too: hit the lowest ball first and knock the 9 in with it, and you win on the spot, even on the break.",
+      ],
+      demo: {
+        caption: "A combination: the cue ball hits the 1 first, as it must, and the 1 sends the 9 into the side pocket. That wins the rack.",
+        layout: [
+          { id: "white", x: 0.25, y: MID },
+          { id: "ball1", x: 0.65, y: MID },
+          { id: "ball9", x: 0.95, y: MID },
+        ],
+        shot: { aim: { at: "ball1" }, power: 0.12, spin: { y: -0.2 } },
+        pots: ["ball9"],
+      },
+    },
+    {
+      heading: "Fouls and ball in hand",
+      body: [
+        "Any foul gives your opponent ball in hand anywhere on the table: hitting the wrong ball first, no ball to a cushion after contact, or potting the cue ball. With only nine balls, ball in hand often means losing the rack, so a safety that leaves your opponent no clear hit on the lowest ball is a strong shot. If the 9 goes down on a foul, it is spotted again.",
+      ],
+      points: [
+        "Under World Pool-Billiard Association rules, three fouls in a row lose the rack, and the player after the break may choose to push out. This app does not use these two rules.",
+        "Plan the run as a sequence: pot each ball while leaving the cue ball on the right side of the next one.",
+      ],
+    },
+  ],
+};
+
 export const nineLessons: Lesson[] = [
+  learn,
   {
     ...common,
     id: "n1-lowest-first",

@@ -1,10 +1,11 @@
 import type { WatchLesson } from "@/core/lessons/schema";
+import { snookerNotes } from "./notes";
 
 /**
- * One watch-and-practise lesson per module of the 8-week beginner curriculum (docs/research/youtube-beginner-playlist.md).
+ * One read-watch-and-practise lesson per module of the 8-week beginner curriculum (docs/research/youtube-beginner-playlist.md).
  * Videos are external links, never embedded. Tags: S = snooker, P = pool, B = both.
  */
-export const watchLessons: WatchLesson[] = [
+const lessons: WatchLesson[] = [
   {
     kind: "watch",
     id: "m0-watch",
@@ -209,3 +210,6 @@ export const watchLessons: WatchLesson[] = [
     practice: "Play a full frame against someone at your level. Use your pre-shot routine on every shot.",
   },
 ];
+
+/** The lessons with their written notes and animated examples (notes.ts). */
+export const watchLessons: WatchLesson[] = lessons.map((l) => ({ ...l, notes: snookerNotes[l.id] }));

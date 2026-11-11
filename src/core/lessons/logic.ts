@@ -94,22 +94,33 @@ export function buildLessonBodies(game: Game, table: Table, lesson: Pick<DrillLe
 export function validateLesson(game: Game, table: Table, lesson: Lesson): string[] {
   const problems: string[] = [];
   if (lesson.kind === "watch") {
-    if (lesson.videos.length === 0) problems.push("watch lesson has no videos");
+    if (lesson.videos.length === 0 && !lesson.notes?.length) problems.push("watch lesson has neither notes nor videos");
     for (const v of lesson.videos) if (!/^https:\/\//.test(v.url)) problems.push(`video "${v.title}" has a non-https url`);
+    for (const section of lesson.notes ?? []) {
+      if (section.body.length === 0) problems.push(`notes "${section.heading}" have no text`);
+      const demo = section.demo;
+      if (!demo) continue;
+      const { bodies, problems: found } = layoutProblems(game, table, { id: demo.caption, layout: demo.layout });
+      problems.push(...found.map((p) => `demo in "${section.heading}": ${p}`));
+      const aim = demo.shot?.aim;
+      if (aim && "pot" in aim && !table.pockets.some((k) => k.id === aim.pocket)) problems.push(`demo in "${section.heading}": unknown pocket "${aim.pocket}"`);
+      const id = aim && ("pot" in aim ? aim.pot : "at" in aim ? aim.at : null);
+      if (id && !bodies.some((b) => b.id === id)) problems.push(`demo in "${section.heading}": ball "${id}" is not in the layout`);
+    }
     return problems;
   }
 
   return validateLayout(game, table, lesson);
 }
 
-/** Checks shared by every lesson that sets up balls: ids, bounds and overlaps, plus kind-specific rules. */
-function validateLayout(game: Game, table: Table, lesson: DrillLesson | BreakLesson): string[] {
+/** Ids, bounds and overlaps of a layout of balls. */
+function layoutProblems(game: Game, table: Table, lesson: Pick<DrillLesson, "layout" | "id">): { bodies: Body[]; problems: string[] } {
   const problems: string[] = [];
   let bodies: Body[] = [];
   try {
     bodies = buildLessonBodies(game, table, lesson);
   } catch (e) {
-    return [(e as Error).message];
+    return { bodies, problems: [(e as Error).message] };
   }
   const ids = new Set(bodies.map((b) => b.id));
   if (ids.size !== bodies.length) problems.push("duplicate ball ids");
@@ -126,6 +137,14 @@ function validateLayout(game: Game, table: Table, lesson: DrillLesson | BreakLes
       if (d < bodies[i].radius + bodies[j].radius) problems.push(`${bodies[i].id} overlaps ${bodies[j].id}`);
     }
   }
+  return { bodies, problems };
+}
+
+/** Checks shared by every lesson that sets up balls: ids, bounds and overlaps, plus kind-specific rules. */
+function validateLayout(game: Game, table: Table, lesson: DrillLesson | BreakLesson): string[] {
+  const { bodies, problems } = layoutProblems(game, table, lesson);
+  if (bodies.length === 0) return problems;
+  const ids = new Set(bodies.map((b) => b.id));
   if (lesson.kind === "break") {
     if (!(lesson.stars[0] > 0 && lesson.stars[0] <= lesson.stars[1] && lesson.stars[1] <= lesson.stars[2])) {
       problems.push("break star thresholds must be positive and ascending");

@@ -1,6 +1,6 @@
 import type { ControlState, Game } from "@/core/game";
 import { clearOfBalls } from "@/core/lessons/challenges";
-import type { AidName, Lesson } from "@/core/lessons/schema";
+import type { AidName, Lesson, WatchLesson } from "@/core/lessons/schema";
 import type { Judgement, RulesEngine, RulesState, Scoreboard } from "@/core/rules";
 import type { SimParams } from "@/core/sim/params";
 import type { Body, ShotResult, Table, Vec3 } from "@/core/types";
@@ -239,7 +239,68 @@ const common: { kind: "drill"; gameId: "shuffleboard"; aids: AidName[]; practice
 const W2 = SHUFFLE.width / 2;
 const start = { id: STRIKER, x: W2, y: SHUFFLE.startY };
 
+const learn: WatchLesson = {
+  kind: "watch",
+  id: "s0-learn",
+  gameId: "shuffleboard",
+  module: "0",
+  moduleTitle: "How shuffleboard works",
+  order: 0,
+  title: "Weight, zones and the furthest puck",
+  goal: "Know how the zones score, why only one player scores each round, and the two shots that matter.",
+  videos: [],
+  notes: [
+    {
+      heading: "The table and scoring",
+      body: [
+        "Table shuffleboard is played on a long, polished wooden table, here 3.66 m (12 ft) of playing surface with a gutter at the far end. Players slide weighted pucks from the near end, aiming to stop them as close to the far edge as possible without falling off.",
+      ],
+      points: [
+        "A puck in the last 15 cm scores 3.",
+        "From 15 to 60 cm from the end: 2.",
+        "From 60 cm to 1.2 m: 1.",
+        "A puck that goes over the end is out. In many clubs, a puck hanging over the edge (a hanger) scores 4. This app does not use that rule.",
+      ],
+    },
+    {
+      heading: "Only the furthest puck scores",
+      body: [
+        "Players alternate, four pucks each per round. When all eight have been played, only the player whose puck is furthest down the table scores. They score for each of their pucks that is further than the opponent's best. The first to 15 wins.",
+        "So the last puck of the round, the hammer, is a big advantage. The other player tries to block, or to clear the board before it is played.",
+      ],
+    },
+    {
+      heading: "The lag: getting the weight right",
+      body: [
+        "The basic shot is the lag, a puck that slides the length of the table and stops in the 3 zone. Use a smooth push and release, with the same motion every time, and change the weight in small steps. The table is waxed and fast, so a little extra push goes a long way.",
+      ],
+      demo: {
+        caption: "A lag: a straight, even push that stops in the 3 zone, just short of the edge.",
+        layout: [{ id: STRIKER, x: W2, y: SHUFFLE.startY }],
+        shot: { aim: { deg: 90 }, power: 0.63 },
+        zone: { x: W2, y: PLAY - 0.075, radius: 0.075 },
+      },
+    },
+    {
+      heading: "Knocking off",
+      body: [
+        "When your opponent has the furthest puck, knock it off. A full, straight hit at the right weight drives their puck over the end, and yours stops close to where theirs was. Pucks are the same weight, so a full hit passes nearly all the speed across. This is the stick shot.",
+      ],
+      demo: {
+        caption: "A knock-off: the blue puck goes over the end, and yours stops in its place in the 3 zone.",
+        layout: [
+          { id: STRIKER, x: W2, y: SHUFFLE.startY },
+          { id: "b1", x: W2, y: PLAY - 0.1 },
+        ],
+        shot: { aim: { at: "b1" }, power: 0.65 },
+        pots: ["b1"],
+      },
+    },
+  ],
+};
+
 export const shuffleLessons: Lesson[] = [
+  learn,
   { ...common, id: "s1-find-the-two", order: 1, title: "Into the 2 zone", goal: "Slide your puck so it stops in the target circle in the 2 zone. Pace is everything here.", layout: [start], success: { zone: { x: W2, y: PLAY - 0.375, radius: 0.2 } }, stars: [4, 6, 8], tips: ["Start firmer than you think, then take a little off each time."] },
   { ...common, id: "s1-find-the-three", order: 2, title: "Hang it in the 3", goal: "Stop in the narrow 3 zone, right at the far end, without going over.", layout: [start], success: { zone: { x: W2, y: PLAY - 0.075, radius: 0.075 } }, stars: [2, 4, 6], tips: ["A puck hanging just short of the edge is the best shot in the game."] },
   { ...common, id: "s1-round-a-blocker", order: 3, title: "Around a blocker", goal: "A puck sits in the way. Angle yours past it and into the circle behind.", layout: [start, { id: "b1", x: W2, y: PLAY - 1.4 }], success: { zone: { x: W2 - 0.13, y: PLAY - 0.5, radius: 0.1 } }, stars: [3, 5, 7], tips: ["Move your puck across the table first, so a small angle does the work."] },

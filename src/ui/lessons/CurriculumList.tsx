@@ -11,7 +11,7 @@ import { ActivityCard } from "../ActivityCard";
 import { Sheet, Stars } from "../kit";
 import { groupByModule, lessonHref } from "./lessonNav";
 
-const KIND: Record<Lesson["kind"], string> = { watch: "Watch", drill: "Drill", break: "Break" };
+const KIND: Record<Lesson["kind"], string> = { watch: "Learn", drill: "Drill", break: "Break" };
 
 /** The curriculum as a numbered path, with each lesson's best result and the next thing to do. */
 export function CurriculumList({ gameId }: { gameId: GameId }) {

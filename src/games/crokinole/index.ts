@@ -1,6 +1,6 @@
 import type { ControlState, Game } from "@/core/game";
 import { scanCannon } from "@/core/lessons/cannon";
-import type { AidName, Lesson } from "@/core/lessons/schema";
+import type { AidName, Lesson, WatchLesson } from "@/core/lessons/schema";
 import type { Judgement, RulesEngine, RulesState, Scoreboard } from "@/core/rules";
 import type { SimParams } from "@/core/sim/params";
 import type { Body, CushionSegment, ShotResult, Table, Vec3 } from "@/core/types";
@@ -237,7 +237,77 @@ const common: { kind: "drill"; gameId: "crokinole"; aids: AidName[]; practiceAtt
 };
 const start = { id: STRIKER, ...onLine(0) };
 
+const learn: WatchLesson = {
+  kind: "watch",
+  id: "k0-learn",
+  gameId: "crokinole",
+  module: "0",
+  moduleTitle: "How crokinole works",
+  order: 0,
+  title: "Rings, pegs and the 20 hole",
+  goal: "Know how each disc scores, the rule about hitting your opponent, and the two basic shots.",
+  videos: [],
+  notes: [
+    {
+      heading: "The board",
+      body: [
+        "Crokinole is played on a round wooden board, about 60 cm across here, with a shallow hole in the centre. Rings mark out the scoring areas, and eight rubber-covered pegs stand round the inner ring. A ditch runs round the outside. Players take turns flicking discs from the shooting line on the outer ring.",
+      ],
+      points: [
+        "In the centre hole: 20, scored at once, and the disc comes off the board.",
+        "Inside the ring of pegs: 15.",
+        "In the middle ring: 10.",
+        "In the outer ring: 5.",
+        "In the ditch: nothing, and the disc is out of play.",
+      ],
+      demo: {
+        caption: "A light disc on 15, a dark disc on 10, and another light disc on 5. Yours waits on the shooting line at the bottom.",
+        layout: [
+          { id: STRIKER, ...onLine(0) },
+          { id: "a1", x: CENTRE + 0.05, y: CENTRE + 0.04 },
+          { id: "b1", x: CENTRE - 0.14, y: CENTRE + 0.05 },
+          { id: "a2", x: CENTRE + 0.12, y: CENTRE - 0.21 },
+        ],
+      },
+    },
+    {
+      heading: "The flick",
+      body: [
+        "Rest your disc on the shooting line and flick it with a fingernail, usually of the index or middle finger. Keep the rest of your hand still and the flick straight through the disc. Most of the skill is weight: a disc that is too fast skims over the hole or runs into the ditch.",
+      ],
+      demo: {
+        caption: "An open 20: a straight flick at the right weight runs up the board and drops into the hole.",
+        layout: [{ id: STRIKER, ...onLine(0) }],
+        shot: { aim: { deg: 90 }, power: 0.27 },
+        strikerPots: true,
+      },
+    },
+    {
+      heading: "The hitting rule",
+      body: [
+        "If any of your opponent's discs is on the board, your shot must hit one of them. If you miss, your own disc is removed. This rule makes the game a battle: you are always trying to knock your opponent's discs off while keeping yours on.",
+        "The best hit takes out the opponent's disc and leaves yours on the board, ideally hidden behind a peg where it is hard to reach.",
+      ],
+      demo: {
+        caption: "A takeout: the dark disc is driven off into the ditch, and yours stays on the board in the 10 ring.",
+        layout: [
+          { id: STRIKER, ...onLine(0) },
+          { id: "b1", x: CENTRE + 0.1, y: CENTRE - 0.17 },
+        ],
+        shot: { aim: { at: "b1" }, power: 0.4 },
+      },
+    },
+    {
+      heading: "Scoring a round",
+      body: [
+        "Here each player has six discs in one round, taken in turns, and the higher total wins. In a traditional match each player has twelve discs, only the difference between the two scores is added to the round winner's total, and the first player to 100 wins.",
+      ],
+    },
+  ],
+};
+
 export const crokinoleLessons: Lesson[] = [
+  learn,
   { ...common, id: "k1-the-twenty", order: 1, title: "The 20 hole", goal: "Flick your disc straight up the board and into the hole in the centre.", layout: [start], success: { pot: { ball: STRIKER, pockets: ["hole"] } }, stars: [3, 5, 7], tips: ["Too hard and it skips over the hole, so aim for a medium, even flick."] },
   { ...common, id: "k1-draw-to-fifteen", order: 2, title: "Draw to the 15 ring", goal: "Stop your disc inside the ring of pegs, for 15 points.", layout: [start], success: { zone: { x: CENTRE, y: CENTRE, radius: CROK.fifteen - CROK.radius } }, stars: [4, 6, 8], tips: ["The pegs guard this ring. Pick the gap first, then the weight."] },
   { ...common, id: "k1-knock-it-in", order: 3, title: "Knock it in", goal: "Hit the dark disc so it drops into the hole.", layout: [start, { id: "b1", x: CENTRE, y: CENTRE - 0.09 }], success: { pot: { ball: "b1", pockets: ["hole"] } }, stars: [3, 5, 7], tips: ["A straight, full hit passes your speed into the other disc."] },

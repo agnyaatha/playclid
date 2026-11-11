@@ -17,4 +17,4 @@ No computer opponent or practice-table coach, since those are built around potti
 
 ## Content
 
-Four drills building from a simple cannon to the full three cushions.
+A reading lesson on scoring and planning a route, then four drills building from a simple cannon to the full three cushions.

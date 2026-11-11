@@ -20,4 +20,4 @@ No computer opponent or practice-table coach. The drills' "show me" search does 
 
 ## Content
 
-Three drills in `index.ts`.
+A reading lesson on the zones, scoring and the lag and knock-off, then three drills in `index.ts`.

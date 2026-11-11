@@ -4,10 +4,11 @@ import Link from "next/link";
 import type { GameId } from "@/core/game";
 import type { WatchLesson } from "@/core/lessons/schema";
 import { useProgress } from "@/core/progress/useProgress";
+import { ShotDemo } from "./ShotDemo";
 
 const TAG_LABEL: Record<string, string> = { S: "Snooker", P: "Pool", B: "Both" };
 
-/** A watch-and-practise lesson: external video links, an at-the-table task, and a manual "done" mark. */
+/** A reading lesson: written notes with animated examples, external video links, an at-the-table task, and a manual "done" mark. */
 export function WatchLessonView({ gameId, lesson, nextHref }: { gameId: GameId; lesson: WatchLesson; nextHref?: string }) {
   const { byLesson, save } = useProgress(gameId);
   const done = byLesson.get(lesson.id)?.completed ?? false;
@@ -20,9 +21,33 @@ export function WatchLessonView({ gameId, lesson, nextHref }: { gameId: GameId; 
         <p className="mt-3 text-lg leading-relaxed text-muted">{lesson.goal}</p>
       </header>
 
-      <section aria-labelledby="videos">
-        <h2 id="videos" className="sr-only">
-          Videos
+      {lesson.notes?.map((section, i) => (
+        <section key={section.heading} aria-labelledby={`note-${i}`} className="flex flex-col gap-4">
+          <h2 id={`note-${i}`} className="display text-2xl font-semibold leading-snug">
+            {section.heading}
+          </h2>
+          {section.body.map((p) => (
+            <p key={p} className="leading-relaxed">
+              {p}
+            </p>
+          ))}
+          {section.points && (
+            <ul className="flex flex-col gap-2 pl-1">
+              {section.points.map((p) => (
+                <li key={p} className="flex gap-3 leading-relaxed">
+                  <span aria-hidden className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brass" />
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {section.demo && <ShotDemo gameId={gameId} demo={section.demo} />}
+        </section>
+      ))}
+
+      {lesson.videos.length > 0 && <section aria-labelledby="videos" className="flex flex-col gap-3">
+        <h2 id="videos" className={lesson.notes ? "eyebrow" : "sr-only"}>
+          Watch next
         </h2>
         <ol className="flex flex-col divide-y divide-line border-y border-line">
           {lesson.videos.map((v, i) => (
@@ -39,7 +64,7 @@ export function WatchLessonView({ gameId, lesson, nextHref }: { gameId: GameId; 
             </li>
           ))}
         </ol>
-      </section>
+      </section>}
 
       {lesson.practice && (
         <section aria-labelledby="practice" className="panel border-l-2 !border-l-brass p-5">

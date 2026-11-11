@@ -1,9 +1,77 @@
 import { cutLayout } from "@/core/lessons/geometry";
-import type { AidName, DrillLesson, Lesson, WatchLesson } from "@/core/lessons/schema";
+import type { AidName, DrillLesson, LayoutBall, Lesson, NoteSection, WatchLesson } from "@/core/lessons/schema";
 import { createPoolTable, POOL } from "../table";
 
 const table = createPoolTable();
 const MID = table.length / 2;
+
+/** A straight pot into the side pocket, the cue ball 0.35 m back, used for stun, follow and draw. */
+const STRAIGHT_SIDE: LayoutBall[] = [
+  { id: "white", x: 0.35, y: MID },
+  { id: "ball1", x: 0.75, y: MID },
+];
+
+const notes: NoteSection[] = [
+  {
+    heading: "8-ball in brief",
+    body: [
+      "8-ball is played with the cue ball and 15 object balls: the solids 1 to 7, the stripes 9 to 15, and the black 8-ball. One player takes the solids and the other the stripes. You win by potting all of your group and then the 8-ball.",
+      "The balls are racked in a triangle with the 8-ball in the middle and the apex ball on the foot spot. The breaker plays from behind the head string (the baulk line) and must pot a ball or drive at least four balls to a cushion.",
+    ],
+    points: [
+      "After the break the table is open. The first ball you legally pot, a solid or a stripe, decides your group.",
+      "Your turn continues while you keep legally potting balls of your group.",
+      "Under the World Pool-Billiard Association rules most players use, you must call the ball and pocket on every shot except the break. Obvious shots need no calling. In bar rules you often call only the 8-ball.",
+      "Pot the 8-ball before your group is cleared, or in a pocket you did not call, and you lose the frame. You also lose if you pot the cue ball on the shot that pots the 8.",
+    ],
+  },
+  {
+    heading: "Fouls and ball in hand",
+    body: [
+      "A foul gives your opponent ball in hand: they may place the cue ball anywhere on the table before playing. That is a big advantage, so avoiding fouls matters more in pool than in snooker.",
+    ],
+    points: [
+      "Potting the cue ball (a scratch).",
+      "Hitting a ball of the other group (or the 8-ball, too early) first.",
+      "After the cue ball hits a legal ball, no ball goes to a cushion and nothing is potted.",
+      "Touching a ball with your hand, clothing or the cue, other than the cue tip striking the cue ball.",
+    ],
+  },
+  {
+    heading: "Stop: stun the cue ball dead",
+    body: [
+      "Hit a little below centre so the cue ball still slides with no spin when it reaches the object ball. On a straight shot it stops on the spot where it made contact. This stop shot is the base of all cue-ball control.",
+    ],
+    demo: {
+      caption: "Stop shot: struck a little below centre, the cue ball stops where the 1-ball was.",
+      layout: STRAIGHT_SIDE,
+      shot: { aim: { pot: "ball1", pocket: "mr" }, power: 0.17, spin: { y: -0.3 } },
+    },
+  },
+  {
+    heading: "Follow and draw",
+    body: [
+      "Hit above centre for follow: the cue ball rolls on after the object ball. Hit well below centre for draw: the backspin is still there at contact, and the cue ball comes back toward you. Use a level cue, a relaxed grip and a smooth follow-through. Draw comes from a clean low hit and cue speed, not a hard jab.",
+      "On a cut, a stunned cue ball leaves the object ball at 90° to the object ball's path. Follow bends it forward of that line, and draw bends it back.",
+    ],
+    demo: {
+      caption: "Draw: struck low, the cue ball comes back about 40 cm after potting the 1-ball.",
+      layout: STRAIGHT_SIDE,
+      shot: { aim: { pot: "ball1", pocket: "mr" }, power: 0.22, spin: { y: -0.5 } },
+    },
+  },
+  {
+    heading: "Follow in action",
+    body: [
+      "Follow at soft pace is the safest way to move the cue ball forward. Too hard, and on a straight shot it follows the object ball into the pocket for a scratch.",
+    ],
+    demo: {
+      caption: "Follow: struck above centre, the cue ball rolls on after the 1-ball and stops short of the pocket.",
+      layout: STRAIGHT_SIDE,
+      shot: { aim: { pot: "ball1", pocket: "mr" }, power: 0.12, spin: { y: 0.4 } },
+    },
+  },
+];
 
 const watch: WatchLesson = {
   kind: "watch",
@@ -14,6 +82,7 @@ const watch: WatchLesson = {
   order: 0,
   title: "Watch: 8-ball rules and cue-ball control",
   goal: "Know how 8-ball is played, and how stun, follow and draw send the cue ball.",
+  notes,
   videos: [
     { title: "The Rules of 8 Ball Pool – EXPLAINED!", url: "https://www.youtube.com/watch?v=eDKt-kaOtGE", tags: ["P"] },
     { title: "HOW TO PLAY 8 BALL … The \"Official Rules\" of Pool", url: "https://www.youtube.com/watch?v=c-4URzvawhs", tags: ["P"] },

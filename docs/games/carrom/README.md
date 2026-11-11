@@ -18,4 +18,4 @@ It is a single frame to clear your coins, with one baseline used by both players
 
 ## Content
 
-Two modules of drills and nine challenges.
+A reading lesson on the board, the flick and the queen, then two modules of drills and nine challenges.

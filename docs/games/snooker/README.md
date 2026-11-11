@@ -16,4 +16,4 @@ Physics: [physics.md](physics.md). Code: `src/games/snooker/`.
 
 ## Content
 
-Lessons in `lessons/`: video modules from the beginner curriculum (`watch.ts`), drills (`drills.ts`) and break drills (`breaks.ts`), plus nine challenges (`challenges.ts`).
+Lessons in `lessons/`: reading modules from the beginner curriculum (`watch.ts`, with their written notes and animated examples in `notes.ts`), drills (`drills.ts`) and break drills (`breaks.ts`), plus nine challenges (`challenges.ts`).

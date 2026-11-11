@@ -1,6 +1,7 @@
 import type { Game } from "@/core/game";
 import { scanCannon } from "@/core/lessons/cannon";
-import type { AidName, DrillLesson, Lesson } from "@/core/lessons/schema";
+import { layoutOf } from "@/core/lessons/demo";
+import type { AidName, DrillLesson, Lesson, WatchLesson } from "@/core/lessons/schema";
 import type { Judgement, RulesEngine, RulesState, Scoreboard } from "@/core/rules";
 import type { SimParams } from "@/core/sim/params";
 import type { Body, Table, Vec3 } from "@/core/types";
@@ -163,7 +164,74 @@ const lesson = (id: string, order: number, title: string, goal: string, cushions
   tips,
 });
 
+const learn: WatchLesson = {
+  kind: "watch",
+  id: "t0-learn",
+  gameId: "threecushion",
+  module: "0",
+  moduleTitle: "How three-cushion works",
+  order: 0,
+  title: "Three balls, no pockets, three cushions",
+  goal: "Know what counts as a point and how to start planning a route round the table.",
+  videos: [],
+  notes: [
+    {
+      heading: "The table and the balls",
+      body: [
+        "Three-cushion billiards (carom) is played on a heated table with no pockets. The match table here has a playing area of 2.84 m by 1.42 m. There are three balls: your cue ball (the white), your opponent's cue ball (the yellow) and the red.",
+        "At the start, the red is on the foot spot, the yellow on the head spot, and the white beside it on the same line.",
+      ],
+      demo: { caption: "The opening position: the red on the foot spot, the yellow on the head spot and the white beside it.", layout: layoutOf(threecushion.createInitialBodies(createThreeCushionTable())) },
+    },
+    {
+      heading: "What scores a point",
+      body: [
+        "You score a point when your cue ball hits both other balls and touches at least three cushions before it reaches the second ball. The cushions can come before the first ball, between the two, or a mix. The same cushion can count more than once. Score and you play on; miss and it is your opponent's turn. Here the first to 15 wins. Professional matches go to 40 or 50.",
+      ],
+    },
+    {
+      heading: "Start with a plain cannon",
+      body: [
+        "Before worrying about cushions, learn how your ball leaves the first object ball. A thin contact keeps most of its speed and changes its direction a little. A thick contact slows it and sends it off at a wider angle. With a natural roll, a half-ball contact sends it off at about 30°.",
+      ],
+      demo: {
+        caption: "A cannon with no cushions: the white glances off the red and runs on to the yellow.",
+        layout: [
+          { id: "white", x: 0.71, y: 0.6 },
+          { id: "red", x: 0.6, y: 1.5 },
+          { id: "yellow", x: 0.85, y: 1.5 },
+        ],
+        shot: { aim: { deg: 14 }, power: 0.3 },
+        cannon: 0,
+      },
+    },
+    {
+      heading: "Plan the route, then the hit",
+      body: [
+        "In three-cushion you plan backwards. First choose the route your ball will take round the cushions to reach the second ball. Then work out how to hit the first ball so your ball starts on that route. Routes round a corner, along two cushions that meet, are the most common, because three cushions come quickly there.",
+        "Spin is your main control. Running side keeps your ball moving along the cushions and widens the angles; check side narrows them. Pace matters as much as direction: the ball must make it round and still reach the second ball.",
+      ],
+      points: [
+        "Players use the diamonds on the rails, with systems such as the Diamond System, to work out where to aim on the first cushion.",
+        "Think about where all three balls will stop, not only about making the point. That is position play in a pocketless game.",
+      ],
+      demo: {
+        caption: "A full point: off the red, then three cushions round the table, and on to the yellow.",
+        layout: [
+          { id: "white", x: 0.35, y: 0.6 },
+          { id: "red", x: 0.5, y: 0.95 },
+          { id: "yellow", x: 1.1, y: 2.2 },
+        ],
+        shot: { aim: { deg: 12.5 }, power: 0.8, spin: { y: 0.25 } },
+        showPath: true,
+        cannon: 3,
+      },
+    },
+  ],
+};
+
 export const threeCushionLessons: Lesson[] = [
+  learn,
   lesson("t1-cannon", 1, "A simple cannon", "Hit both other balls, with no cushions needed yet. Get a feel for how your ball leaves the first one.", 0, [0.71, 0.6], [0.6, 1.5], [0.85, 1.5], [4, 6, 8], ["Clip the first ball just enough that yours runs on to the second."]),
   lesson("t1-one-cushion", 2, "One cushion first", "Touch one cushion before reaching the second ball.", 1, [0.4, 0.7], [0.45, 1.3], [1.1, 1.2], [3, 5, 7], ["Pick the cushion first, then work backwards to where to hit the first ball."]),
   lesson("t1-two-cushion", 3, "Two cushions", "Now two cushions before the second ball.", 2, [0.4, 0.6], [0.55, 1.0], [1.15, 2.0], [2, 4, 6], ["Side spin widens or narrows the angle your ball takes off each cushion."]),

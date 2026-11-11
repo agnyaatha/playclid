@@ -1,5 +1,7 @@
-import type { AidName, DrillLesson, Lesson } from "@/core/lessons/schema";
-import { CARROM } from "../table";
+import { layoutOf } from "@/core/lessons/demo";
+import type { AidName, DrillLesson, Lesson, WatchLesson } from "@/core/lessons/schema";
+import { startingBodies } from "../layout";
+import { CARROM, createCarromTable } from "../table";
 
 const common: { kind: "drill"; gameId: "carrom"; aids: AidName[]; practiceAttempts: number; testAttempts: number } = {
   kind: "drill",
@@ -95,4 +97,70 @@ const drills: DrillLesson[] = [
   },
 ];
 
-export const carromLessons: Lesson[] = drills;
+const learn: WatchLesson = {
+  kind: "watch",
+  id: "c0-learn",
+  gameId: "carrom",
+  module: "0",
+  moduleTitle: "How carrom works",
+  order: 0,
+  title: "The board, the coins and the flick",
+  goal: "Know the coins, how to flick the striker, and how the queen is won.",
+  videos: [],
+  notes: [
+    {
+      heading: "The board and the coins",
+      body: [
+        "Carrom is played on a smooth square board, about 74 cm across inside the frame, with a pocket in each corner. A light dusting of powder lets the pieces glide. There are nine white coins, nine black coins and one red coin, the queen. You play them with a heavier, larger disc: the striker.",
+        "At the start, the queen sits in the centre, with six coins in a ring around her and twelve more in an outer ring, the colours alternating.",
+      ],
+      demo: { caption: "The opening pattern: the queen in the centre, the coins in two rings around her, and the striker on the baseline.", layout: layoutOf(startingBodies(createCarromTable())) },
+    },
+    {
+      heading: "The flick",
+      body: [
+        "You shoot by flicking the striker with a finger, from anywhere along your baseline. Most players flick with the index finger, steadying the hand with the other fingers or the thumb on the board. Others push with the middle finger or flick with the thumb. Keep your hand still and move only the finger, straight through the line of aim, just as you would keep the cue straight in snooker.",
+        "Choosing where to put the striker on the baseline is half of the aim. Slide it along until the coin and the pocket line up with a comfortable angle.",
+      ],
+    },
+    {
+      heading: "Aiming at a coin",
+      body: [
+        "Aiming works as it does in pool. Picture the striker touching the coin on the far side from the pocket (the ghost striker) and flick it to that spot. The coin then goes toward the pocket. A firm flick is more reliable than a gentle one, because a slow coin can stop in the jaws.",
+      ],
+      demo: {
+        caption: "A cut into the far right corner: the striker meets the coin at the ghost position and the white coin drops in.",
+        layout: [
+          { id: "striker", x: 0.37, y: CARROM.baselineY },
+          { id: "w1", x: 0.45, y: 0.45 },
+        ],
+        shot: { aim: { deg: 81.22 }, power: 0.3 },
+        pots: ["w1"],
+      },
+    },
+    {
+      heading: "Scoring and the queen",
+      body: [
+        "Each player has a colour; here Player 1 plays white. Pocket one of your coins and you shoot again. Pocket none of yours and the turn passes. The first to clear all nine of their coins wins.",
+        "The queen is worth 3, but you must cover her: after pocketing the queen, you must pocket one of your own coins on the same shot or the next. Miss the cover, and the queen goes back to the centre.",
+      ],
+      demo: {
+        caption: "Taking the queen from the centre into the far left corner. Now she needs covering with one of your own coins.",
+        layout: [
+          { id: "striker", x: 0.37, y: CARROM.baselineY },
+          { id: "queen", x: 0.37, y: 0.37 },
+        ],
+        shot: { aim: { deg: 95.66 }, power: 0.4 },
+        pots: ["queen"],
+      },
+    },
+    {
+      heading: "Fouls",
+      body: [
+        "Pocketing the striker is a foul. Any coins pocketed on that shot come back to the board, and if none of yours went in, you also give back one coin you pocketed earlier. The striker returns to the baseline after every shot.",
+      ],
+    },
+  ],
+};
+
+export const carromLessons: Lesson[] = [learn, ...drills];
