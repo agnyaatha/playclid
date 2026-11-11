@@ -1,6 +1,6 @@
 # Code of conduct
 
-Table Craft adopts the [Contributor Covenant, version 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). The full text applies to everyone taking part: in issues, pull requests, discussions and any other project space.
+PlayClid adopts the [Contributor Covenant, version 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). The full text applies to everyone taking part: in issues, pull requests, discussions and any other project space.
 
 ## In short
 

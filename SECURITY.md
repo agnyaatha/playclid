@@ -1,6 +1,6 @@
 # Security policy
 
-Table Craft runs entirely in the browser and has no backend, accounts or stored personal data. Security issues are still possible, for example a way to inject script into a page, or a problem in a dependency.
+PlayClid runs entirely in the browser and has no backend, accounts or stored personal data. Security issues are still possible, for example a way to inject script into a page, or a problem in a dependency.
 
 ## Reporting a vulnerability
 

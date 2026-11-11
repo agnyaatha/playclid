@@ -11,10 +11,10 @@ describe("site metadata", () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
     vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "");
     expect(siteUrl().origin).toBe("http://localhost:3000");
-    vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "table-craft.vercel.app");
-    expect(siteUrl().origin).toBe("https://table-craft.vercel.app");
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://tablecraft.example");
-    expect(siteUrl().origin).toBe("https://tablecraft.example");
+    vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "playclid.vercel.app");
+    expect(siteUrl().origin).toBe("https://playclid.vercel.app");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://playclid.example");
+    expect(siteUrl().origin).toBe("https://playclid.example");
   });
 
   it("keeps Vercel preview deployments out of search results", () => {

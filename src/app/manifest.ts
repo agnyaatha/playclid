@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Table Craft",
-    short_name: "Table Craft",
+    name: "PlayClid",
+    short_name: "PlayClid",
     description: "Learn snooker, pool and carrom with a physics-based practice table, guided drills and a beginner curriculum.",
     start_url: "/",
     display: "standalone",

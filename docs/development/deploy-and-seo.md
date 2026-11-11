@@ -23,7 +23,7 @@ All are optional. Each is read at **build** time, so redeploy after changing one
 | Variable | What it does |
 |---|---|
 | `NEXT_PUBLIC_GA_ID` | Google Analytics measurement ID. Without it no analytics load. See [analytics](analytics.md) |
-| `NEXT_PUBLIC_SITE_URL` | The public address, such as `https://tablecraft.app`. Set it once a custom domain is live. Without it, Vercel's production domain is used |
+| `NEXT_PUBLIC_SITE_URL` | The public address, such as `https://playclid.app`. Set it once a custom domain is live. Without it, Vercel's production domain is used |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | The code from Google Search Console's "HTML tag" verification method |
 | `NEXT_PUBLIC_CONTACT_EMAIL` | Shown on the privacy page as the contact for data questions |
 

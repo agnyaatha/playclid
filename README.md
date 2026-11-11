@@ -1,13 +1,13 @@
-# Table Craft
+# PlayClid
 
 **Learn snooker, pool, carrom and five more table games on a real physics engine, free in your browser.**
 
-Table Craft is a practice table and a coach. Line up a shot and see exactly where every ball will go, then work through guided drills that fade the aiming aids as you improve. There is no backend and no account: everything runs in the browser, works offline once loaded, and progress stays on the device.
+PlayClid is a practice table and a coach. Line up a shot and see exactly where every ball will go, then work through guided drills that fade the aiming aids as you improve. There is no backend and no account: everything runs in the browser, works offline once loaded, and progress stays on the device.
 
 [![CI](https://github.com/agnyaatha/sim-pool/actions/workflows/ci.yml/badge.svg)](https://github.com/agnyaatha/sim-pool/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-![The Table Craft home page, with a snooker table in perspective](docs/images/home.jpg)
+![The PlayClid home page, with a snooker table in perspective](docs/images/home.jpg)
 
 ![Practising snooker: the aiming guide shows the cue ball's path and the cut angle](docs/images/snooker-practice.jpg)
 

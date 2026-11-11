@@ -1,6 +1,6 @@
 /** Facts about the site itself, shared by the metadata, sitemap, robots rules, sharing images and structured data. */
 
-export const SITE_NAME = "Table Craft";
+export const SITE_NAME = "PlayClid";
 
 /** One sentence that works as a search snippet and a link preview. */
 export const SITE_DESCRIPTION =

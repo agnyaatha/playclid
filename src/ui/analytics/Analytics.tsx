@@ -47,7 +47,7 @@ export function Analytics() {
     <div role="dialog" aria-label="Usage statistics" className="fixed bottom-3 left-3 right-3 z-50 sm:right-auto sm:max-w-sm">
       <div className="flex flex-col gap-3 rounded-xl border border-line bg-ink p-4 text-sm shadow-lg">
         <p>
-          Can we count visits and which parts of Table Craft you use? It helps us decide what to improve. We use Google
+          Can we count visits and which parts of PlayClid you use? It helps us decide what to improve. We use Google
           Analytics cookies only if you agree, and never for ads. You can change this at any time.{" "}
           <Link href="/privacy" className="text-brass underline">
             Privacy

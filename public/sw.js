@@ -1,6 +1,6 @@
 /* Minimal offline support. Static build assets are cached as they are used; pages try the network first and fall
  * back to the last copy. All progress is stored on the device already, so the app keeps working offline. */
-const CACHE = "table-craft-v3";
+const CACHE = "playclid-v1";
 
 self.addEventListener("install", () => self.skipWaiting());
 

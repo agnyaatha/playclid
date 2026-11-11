@@ -1,4 +1,4 @@
-# Table Craft documentation
+# PlayClid documentation
 
 | Folder | What is in it |
 |---|---|

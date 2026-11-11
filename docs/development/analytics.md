@@ -1,6 +1,6 @@
 # Usage analytics
 
-Table Craft can count visitors and see which games and sections they use, through Google Analytics 4 (GA4). It is off until you configure it, and then sends nothing until each visitor agrees.
+PlayClid can count visitors and see which games and sections they use, through Google Analytics 4 (GA4). It is off until you configure it, and then sends nothing until each visitor agrees.
 
 ## Turning it on
 

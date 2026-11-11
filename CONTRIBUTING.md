@@ -1,4 +1,4 @@
-# Contributing to Table Craft
+# Contributing to PlayClid
 
 Thank you for helping. This page covers what to work on and how changes get in. For setting up and working on the code, see the [developer guide](docs/development/getting-started.md).
 
@@ -52,7 +52,7 @@ The linter and type checker enforce most things. Beyond them:
 
 ## Licence of contributions
 
-Table Craft is [MIT licensed](LICENSE). By submitting a pull request you agree that your contribution is licensed under the same terms, and that you have the right to submit it. Do not paste code, images or text from sources whose licence does not allow it.
+PlayClid is [MIT licensed](LICENSE). By submitting a pull request you agree that your contribution is licensed under the same terms, and that you have the right to submit it. Do not paste code, images or text from sources whose licence does not allow it.
 
 ## Getting help
 
