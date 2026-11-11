@@ -13,6 +13,17 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    # Major versions the toolchain cannot take yet. Minor, patch and security updates still arrive.
+    ignore:
+      # typescript-eslint does not support TypeScript 7 yet. Remove once it does.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # The app runs on Node 22 (.nvmrc and Vercel); its types must not get ahead of it. Remove when Node is upgraded.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # eslint-config-next's plugins (import, jsx-a11y, react) support ESLint 9 at most. Remove once they support 10.
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
