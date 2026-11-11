@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { track } from "@/core/analytics/track";
 import type { GameId } from "../game";
 import { progressStore, SERVER_SNAPSHOT, summarise, type ProgressEntry, type ProgressStore } from "./store";
 
@@ -8,5 +9,12 @@ import { progressStore, SERVER_SNAPSHOT, summarise, type ProgressEntry, type Pro
 export function useProgress(gameId?: GameId, store: ProgressStore = progressStore) {
   const entries = useSyncExternalStore<readonly ProgressEntry[]>(store.subscribe, store.getSnapshot, () => SERVER_SNAPSHOT);
   const byLesson = useMemo(() => summarise(entries, gameId), [entries, gameId]);
-  return { entries, byLesson, save: store.save.bind(store), clear: store.clear.bind(store) };
+  const save = useCallback(
+    (entry: ProgressEntry) => {
+      store.save(entry);
+      track("activity_complete", { kind: entry.kind, activity_id: entry.lessonId, stars: entry.stars });
+    },
+    [store],
+  );
+  return { entries, byLesson, save, clear: store.clear.bind(store) };
 }

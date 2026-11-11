@@ -5,7 +5,7 @@
 | [architecture/](architecture/overview.md) | How the code is layered, how lessons and challenges work, the UI and theming, and how to add a game |
 | [physics/](physics/README.md) | The shared engine: motion, collisions, the event loop, tables, strikes and how it is verified |
 | [games/](games/README.md) | One folder per game, each with its rules (`README.md`) and physics (`physics.md`) |
-| [development/](development/checks.md) | The pre-commit production checks |
+| [development/](development/checks.md) | The pre-commit production checks, and [usage analytics](development/analytics.md) |
 | [research/](research/snooker-app-design.md) | The original research notes the project was built from |
 
 ## Keeping these accurate

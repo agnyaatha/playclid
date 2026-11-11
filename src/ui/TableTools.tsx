@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { usePref } from "@/core/prefs/usePref";
+import { useAnalyticsConsent } from "./analytics/Analytics";
 import { AidChips } from "./controls/ShotControls";
 import { GuideSettings } from "./controls/GuideSettings";
 import { Field, Sheet, Slider, Toggle } from "./kit";
@@ -31,6 +32,7 @@ const noSubscribe = () => () => {};
 /** The settings and keyboard-help buttons that float on the table, and the panels they open. */
 export function TableTools({ session }: { session: ReturnType<typeof useTableSession> }) {
   const [panel, setPanel] = useState<"settings" | "keys" | null>(null);
+  const analytics = useAnalyticsConsent();
   const { fx, setFx } = session;
   const striker = session.input.tipOffset ? "cue ball" : "striker";
   const [tourDone, setTourDone] = usePref<boolean>("tourDone", false);
@@ -71,6 +73,14 @@ export function TableTools({ session }: { session: ReturnType<typeof useTableSes
             <Slider id="volume" min={0} max={1} step={0.05} value={fx.volume} disabled={!fx.sound} onChange={(volume) => setFx({ ...fx, volume })} />
           </Field>
         </section>
+
+        {analytics.enabled && (
+          <section className="flex flex-col gap-3" aria-label="Privacy">
+            <p className="eyebrow">Privacy</p>
+            <Toggle label="Share anonymous usage stats" checked={analytics.consent === "granted"} onChange={(on) => analytics.setConsent(on ? "granted" : "denied")} />
+            <p className="-mt-2 text-xs leading-relaxed text-muted">Counts visits and which parts you use, through Google Analytics. Never used for ads.</p>
+          </section>
+        )}
 
         {!session.lesson && (
           <>

@@ -6,6 +6,7 @@ import { Segmented } from "@/ui/kit";
 import type { CameraMode } from "./3d/camera";
 import { TableCanvas3D } from "./3d/TableCanvas3D";
 import { TableCanvas } from "./2d/TableCanvas";
+import { track } from "@/core/analytics/track";
 
 export type ViewMode = "2d" | "3d";
 
@@ -23,9 +24,17 @@ interface Props extends ComponentProps<typeof TableCanvas> {
 
 /** The table in 2D or 3D, with its view controls floating over it. Either view takes the same props. */
 export function TableView({ onAimDelta, children, tools, ...props }: Props) {
-  const [view, setView] = usePref<ViewMode>("view", "2d", isView);
+  const [view, storeView] = usePref<ViewMode>("view", "2d", isView);
+  const setView = useCallback(
+    (v: ViewMode) => {
+      if (v !== view) track("view_change", { view: v });
+      storeView(v);
+    },
+    [view, storeView],
+  );
   const [camera, setCamera] = usePref<CameraMode>("camera", "auto", isCamera);
-  const fallBack = useCallback(() => setView("2d"), [setView]);
+  // A device that cannot draw 3D drops back to 2D by itself; that is not the player's choice, so it is not tracked.
+  const fallBack = useCallback(() => storeView("2d"), [storeView]);
   const { table, theme } = props;
   const aspect = (table.length + 2 * theme.frame) / (table.width + 2 * theme.frame);
 

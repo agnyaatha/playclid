@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow, Barlow_Condensed } from "next/font/google";
+import { Analytics } from "@/ui/analytics/Analytics";
 import { ButtonEffects } from "@/ui/ButtonEffects";
 import { RegisterServiceWorker } from "@/ui/RegisterServiceWorker";
 import { SiteHeader } from "@/ui/SiteHeader";
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ButtonEffects />
         <SiteHeader />
         {children}
+        <Analytics />
       </body>
     </html>
   );

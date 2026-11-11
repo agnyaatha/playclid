@@ -19,6 +19,7 @@ import { sound } from "./fx/sound";
 import { useAppTheme } from "./ThemeButton";
 import { useShotPlayer } from "./useShotPlayer";
 import { useSimParams } from "./useSimParams";
+import { track } from "@/core/analytics/track";
 
 const DEFAULT_AIDS: AimAids = { aimLine: true, ghostBall: true, prediction: true };
 const isAids = (v: unknown): v is AimAids =>
@@ -187,7 +188,11 @@ export function useTableSession({ gameId, makeInitial, makeControls, blocked = f
 
   /** Feedback once a shot has been judged: what happened, any points, and anything worth a fuss. */
   const celebrate = ({ result, points = 0, foul = false, breakBefore = 0, breakAfter = 0, replay = false, log = true }: Celebration) => {
-    if (log) logShot(foul || game.noPotting ? 0 : pottedBalls(result, input.strikerId).length, breakAfter);
+    const potted = foul || game.noPotting ? 0 : pottedBalls(result, input.strikerId).length;
+    if (log) {
+      logShot(potted, breakAfter);
+      track("shot", { potted, foul });
+    }
     if (!game.noPotting) tableFx.emit({ kind: "verdict", ...shotVerdict(result, input.strikerId, table, simParams.cloth) });
     if (foul) return;
     const lastPot = result.events.findLast((e) => e.type === "pocket" && e.body !== input.strikerId);
