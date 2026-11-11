@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import type { GameId } from "@/core/game";
 import { SITE_NAME } from "@/core/site";
 import { getGame } from "@/games/registry";
+import { AppMark } from "../AppMark";
 
 /** Link-preview size used by Facebook, LinkedIn, X, WhatsApp, Slack and others. */
 export const SHARE_SIZE = { width: 1200, height: 630 };
@@ -91,7 +92,7 @@ export function shareCard({ eyebrow, title, subtitle, gameId }: { eyebrow: strin
       <div style={{ display: "flex", width: "100%", height: "100%", background: INK, color: IVORY, padding: "64px 56px 64px 72px", alignItems: "center", gap: 48 }}>
         <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 26, color: BRASS, letterSpacing: 4, textTransform: "uppercase" }}>
-            <div style={{ display: "flex", width: 22, height: 22, borderRadius: 9999, background: "radial-gradient(circle at 35% 30%, #fff, #f0e9d8 40%, #a59a80)" }} />
+            <AppMark size={30} />
             {eyebrow}
           </div>
           <div style={{ display: "flex", marginTop: 28, fontSize: 68, fontWeight: 700, lineHeight: 1.05 }}>{title}</div>

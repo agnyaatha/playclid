@@ -36,7 +36,9 @@ All of it comes from `src/core/site.ts` and the metadata files in `src/app/`:
 | Title, description and keywords for the whole site | `src/app/layout.tsx` (`SITE_DESCRIPTION`, `SITE_KEYWORDS`) |
 | A title, description and canonical address for every page | `generateMetadata` in each page, through `pageMetadata` |
 | Link previews (Open Graph and X cards), one image per game drawn from its real starting layout | `src/app/opengraph-image.tsx`, `src/app/[game]/opengraph-image.tsx`, `src/ui/og/ShareCard.tsx` |
-| Home-screen icon for iPhone and iPad | `src/app/apple-icon.tsx` |
+| Home-screen icon for iPhone and iPad | `src/app/apple-icon.png` |
+| Browser-tab icons | `src/app/icon.svg` (the mark on a rounded tile) and `src/app/favicon.ico` (16, 32 and 48 px) |
+| App icons for the manifest | `public/icon.svg`, `public/icon-192.png`, `public/icon-512.png` |
 | Sitemap of every game, lesson and challenge | `src/app/sitemap.ts`, served at `/sitemap.xml` |
 | Crawl rules | `src/app/robots.ts`, served at `/robots.txt` |
 | Structured data: the app, the list of games, the FAQ, a course per game, breadcrumbs | `JsonLd` in the home page, game hubs and lessons |
