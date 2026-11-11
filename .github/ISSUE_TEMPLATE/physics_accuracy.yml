@@ -1,0 +1,34 @@
+name: Physics accuracy
+description: A shot that does not behave like the real game.
+labels: [physics]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! The engine aims to match real tables, and each game's `docs/games/<game>/physics.md` lists where every number comes from. Evidence makes these reports actionable.
+  - type: dropdown
+    id: game
+    attributes:
+      label: Game
+      options: [Snooker, English Billiards, Three-Cushion, 8-Ball Pool, 9-Ball, Carrom, Crokinole, Shuffleboard]
+    validations:
+      required: true
+  - type: textarea
+    id: shot
+    attributes:
+      label: The shot
+      description: Ball positions, aim, power and cue-tip offset (the values shown on screen), or a screenshot with the guides on.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What a real table does
+      description: What happens on a real table, and how far off the simulation is.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Video, measurements, a published source (Alciatore, Mathavan, pooltool...) or your own experience as a player.

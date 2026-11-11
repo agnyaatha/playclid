@@ -1,0 +1,42 @@
+name: Bug report
+description: Something is broken, crashes or scores wrongly.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Snooker → Practice
+        2. Aim at the pink with full power and top spin
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: page
+    attributes:
+      label: Page address
+      placeholder: https://…/snooker/practice
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: iPhone 15, Safari 18 / Windows 11, Chrome 131
+    validations:
+      required: true
+  - type: dropdown
+    id: view
+    attributes:
+      label: View
+      options: ["2D", "3D", "Not relevant"]
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots, clips or console errors

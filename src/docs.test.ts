@@ -28,7 +28,7 @@ describe("documentation", () => {
   it("has no broken relative links", () => {
     const broken: string[] = [];
     // The research notes are kept as they were written.
-    const pages = [join(root, "README.md"), ...markdownIn(docs).filter((p) => !p.includes("research"))];
+    const pages = [...["README.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md"].map((f) => join(root, f)), ...markdownIn(docs).filter((p) => !p.includes("research"))];
     for (const page of pages) {
       for (const [, target] of readFileSync(page, "utf8").matchAll(/\]\(([^)#\s]+)(?:#[^)]*)?\)/g)) {
         if (/^https?:/.test(target)) continue;

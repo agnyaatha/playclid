@@ -1,6 +1,18 @@
 {
   "name": "sim-pool",
   "version": "0.1.0",
+  "description": "Learn snooker, pool, carrom and more on a real physics engine, in the browser.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agnyaatha/sim-pool.git"
+  },
+  "bugs": {
+    "url": "https://github.com/agnyaatha/sim-pool/issues"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev",
