@@ -1,0 +1,19 @@
+
+# ── type(scope): subject ──────── keep the first line under 72 characters ──
+#
+# type:    feat | fix | physics | content | perf | refactor | docs | test
+#          style | build | ci | chore | revert
+# scope:   optional; the game or area, e.g. snooker, carrom, physics, lessons,
+#          3d, ui, analytics, seo, deps
+# subject: a command in lower case, no full stop: "add", "fix", "tune", not
+#          "added" or "fixes". Add ! after the scope for a breaking change.
+#
+# Examples:
+#   fix(physics): stop the cue ball sticking to the cushion at low speed
+#   content(pool): add a stop-shot drill for the side pocket
+#   feat(3d)!: replace the camera presets with free orbit
+#
+# Then a blank line, and a body saying what changed and why (wrap at ~72).
+# Reference issues at the end: "Fixes #123" or "Refs #45".
+#
+# Lines starting with # are ignored. See CONTRIBUTING.md#commit-messages.

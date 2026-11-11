@@ -18,15 +18,15 @@ No database, API keys or accounts are needed. The app has no backend.
 ### Install and run
 
 ```bash
-git clone https://github.com/agnyaatha/sim-pool.git
-cd sim-pool
+git clone https://github.com/agnyaatha/playclid.git
+cd playclid
 npm install
 npm run dev
 ```
 
 Open <http://localhost:3000>. Pages reload as you save.
 
-`npm install` also runs `scripts/install-hooks.mjs`, which points git at `.githooks/`, so the [pre-commit checks](checks.md) run before every commit. If you cloned without running `npm install`, run `npm run prepare` to turn them on.
+`npm install` also runs `scripts/install-hooks.mjs`, which points git at `.githooks/` and at the commit message template, so the [pre-commit checks](checks.md) run before every commit and the message format is checked. If you cloned without running `npm install`, run `npm run prepare` to turn them on.
 
 ### Environment variables
 
@@ -73,7 +73,7 @@ src/
   ui/           Screens, controls, effects, the consent banner, the footer
   workers/      The solver and coach, off the main thread
 docs/           Architecture, physics, per-game pages, development guides
-scripts/        The pre-commit checks and hook installer
+scripts/        The pre-commit checks, the commit-message check and the hook installer
 public/         Static files: the icon and the offline service worker
 ```
 
@@ -120,8 +120,8 @@ This project uses Next.js 16 with Cache Components. Some APIs differ from older 
 3. **Write the change and its tests.** Rules, physics and lesson content all have tests next to them. New behaviour needs a test that fails without it.
 4. **Update the docs** that describe what you changed. `src/docs.test.ts` fails on broken links in the docs, and if a game has no docs pages.
 5. **Run `npm run check`.** The pre-commit hook runs the same checks, and so does CI on your pull request.
-6. **Commit** with a message that says what changed and why, in the imperative ("Fix squirt angle for low-deflection shafts").
-7. **Open a pull request** and fill in the template. Screenshots or a short clip help with anything visible.
+6. **Commit** in the [commit format](../../CONTRIBUTING.md#commit-messages): `type(scope): subject`, such as `fix(physics): lower squirt for low-deflection shafts`. The template opens in your editor, and a hook checks the format.
+7. **Open a pull request** with a title in the same format, and fill in the template. Screenshots or a short clip help with anything visible.
 
 ## 6. Troubleshooting
 
@@ -129,6 +129,7 @@ This project uses Next.js 16 with Cache Components. Some APIs differ from older 
 |---|---|
 | `Cannot find name 'LayoutProps'` or `PageProps` | These types are generated. `npm run typecheck` runs `next typegen` first; a bare `npx tsc` does not |
 | The commit hook says the build directory is in use | Stop `npm run dev` or `npm start`, then commit again |
+| Commit blocked: "Commit message does not follow the project format" | Rewrite the first line as `type(scope): subject`. Your message is kept in `.git/COMMIT_EDITMSG`; `git commit -e -F .git/COMMIT_EDITMSG` reopens it |
 | Commit blocked: "environment file" or "possible API key" | Remove the file from the commit, or move the value to `.env.local`. Never commit real keys |
 | 3D view shows 2D | The browser has no WebGL (common in VMs and some remote desktops). The fallback is deliberate |
 | The app shows an old version after a deploy | The offline service worker serves cached pages. Reload once more, or clear the site data. It is only registered in production builds |

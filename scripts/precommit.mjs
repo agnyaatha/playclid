@@ -67,6 +67,12 @@ function fileChecks() {
     }
   }
 
+  // Git silently skips a hook that is not executable, so a lost mode bit would turn every check off unnoticed.
+  for (const entry of lines(git("ls-files", "-s", ".githooks"))) {
+    const [mode, , , path] = entry.split(/\s+/);
+    if (mode !== "100755") problems.push(`${path}: hooks must be executable (git update-index --chmod=+x ${path})`);
+  }
+
   // Added lines only, so a pattern already in the history does not block unrelated work.
   const added = ALL ? files.flatMap(addedLinesOfWholeFile) : addedLinesFromDiff();
   for (const { file, text } of added) {

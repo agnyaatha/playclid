@@ -4,7 +4,7 @@
 
 PlayClid is a practice table and a coach. Line up a shot and see exactly where every ball will go, then work through guided drills that fade the aiming aids as you improve. There is no backend and no account: everything runs in the browser, works offline once loaded, and progress stays on the device.
 
-[![CI](https://github.com/agnyaatha/sim-pool/actions/workflows/ci.yml/badge.svg)](https://github.com/agnyaatha/sim-pool/actions/workflows/ci.yml)
+[![CI](https://github.com/agnyaatha/playclid/actions/workflows/ci.yml/badge.svg)](https://github.com/agnyaatha/playclid/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ![The PlayClid home page, with a snooker table in perspective](docs/images/home.jpg)
@@ -30,8 +30,8 @@ PlayClid is a practice table and a coach. Line up a shot and see exactly where e
 You need [Node.js](https://nodejs.org) 20.9 or newer (22 is recommended; see [`.nvmrc`](.nvmrc)) and git.
 
 ```bash
-git clone https://github.com/agnyaatha/sim-pool.git
-cd sim-pool
+git clone https://github.com/agnyaatha/playclid.git
+cd playclid
 npm install        # also turns on the pre-commit checks
 npm run dev        # open http://localhost:3000
 ```

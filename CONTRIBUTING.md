@@ -28,10 +28,21 @@ Issues labelled `good first issue` are small and well described. Comment on one 
 1. Fork the repository and branch from `master`.
 2. Make the change, with tests and docs (see below).
 3. Run `npm run check`. It must pass; CI runs the same checks.
-4. Open the pull request and fill in the template. For anything visible, include a screenshot or a short clip, at phone width as well as desktop if the layout changed.
+4. Open the pull request with a title in the [commit format](#commit-messages), and fill in the template. For anything visible, include a screenshot or a short clip, at phone width as well as desktop if the layout changed.
 5. Keep each pull request to one concern. Two unrelated fixes are easier to review as two.
 
-A maintainer will review it, usually within a week. Expect questions: they are part of getting it right, not a rejection. Once approved and green, it is squash-merged.
+A maintainer will review it, usually within a week. Expect questions: they are part of getting it right, not a rejection. Once approved and green, it is squash-merged, so the pull request title becomes the single commit on `master`.
+
+### Checks on every pull request
+
+| Check | What it does |
+|---|---|
+| **CI** | `npm run check`: files, typecheck, lint, tests and a production build |
+| **PR title** | The title follows the [commit format](#commit-messages) |
+| **CodeQL** | GitHub's security scan of the code and the workflows |
+| **Dependency review** | Fails if the change adds a dependency with a known vulnerability or an incompatible licence |
+
+`master` is protected: changes arrive through pull requests with CI and the title check passing, history stays linear, and the branch cannot be force-pushed or deleted.
 
 ### What a pull request needs
 
@@ -48,7 +59,41 @@ The linter and type checker enforce most things. Beyond them:
 - **Comments say why, not what.** A short doc comment on each exported function, saying what it is for and any non-obvious unit or assumption. Units are SI throughout: metres, seconds, kilograms, radians.
 - **Keep the layers.** `src/core/` must not import React UI or a specific game; `src/core/sim/` must not import anything outside itself. See the [architecture overview](docs/architecture/overview.md).
 - **Plain English in the UI and docs.** Short sentences. Explain a billiards term the first time it appears.
-- **Commit messages** in the imperative, saying what and why: `Lower squirt for low-deflection shafts`, not `fixed stuff`.
+
+## Commit messages
+
+Commits and pull request titles follow [Conventional Commits](https://www.conventionalcommits.org):
+
+```text
+type(scope): subject
+
+Body: what changed and why, wrapped at about 72 characters.
+
+Fixes #123
+```
+
+- **type** says what kind of change it is (below).
+- **scope** is optional: the game or area, such as `snooker`, `carrom`, `physics`, `lessons`, `3d`, `ui`, `analytics`, `seo` or `deps`.
+- **subject** is a command in lower case with no full stop, under 72 characters for the whole line: `fix(physics): stop the cue ball sticking to the cushion`, not `Fixed cushion bug.`
+- Add `!` after the type or scope for a change that breaks saved progress, settings or links: `feat(lessons)!: renumber the snooker modules`.
+
+| Type | Use for |
+|---|---|
+| `feat` | A new feature players or contributors can see |
+| `fix` | A bug fix |
+| `physics` | A change to the simulation or a game's physical parameters |
+| `content` | Lessons, drills, challenges or their notes |
+| `perf` | Faster or lighter, with no change in behaviour |
+| `refactor` | Restructured code, no change in behaviour |
+| `docs` | Documentation only |
+| `test` | Tests only |
+| `style` | Formatting only |
+| `build` | Dependencies, the build or tooling |
+| `ci` | GitHub workflows and repository configuration |
+| `chore` | Anything else that does not touch the app |
+| `revert` | Undoing an earlier commit |
+
+`npm install` sets git up to open the template in `.gitmessage` when you commit, and a `commit-msg` hook checks the format before the commit is made. Git's own messages (merges, reverts, `fixup!`) are let through. The rules live in `scripts/commit-lint.mjs`.
 
 ## Licence of contributions
 

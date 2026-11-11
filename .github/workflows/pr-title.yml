@@ -1,0 +1,26 @@
+# Pull requests are squash-merged, so the title becomes the commit message on master. It must follow the same format
+# as every commit: type(scope): subject. See CONTRIBUTING.md#commit-messages.
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  title:
+    # Dependabot writes its own titles in this format (see dependabot.yml), but long package names can pass 72 characters.
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check the title format
+        # The title is passed through the environment, never pasted into the script, so it cannot inject commands.
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: node scripts/commit-lint.mjs --title

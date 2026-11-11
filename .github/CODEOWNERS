@@ -1,0 +1,7 @@
+# Reviewers requested automatically for pull requests. The last matching pattern wins.
+# https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+*                       @agnyaatha
+
+# Add co-owners here as maintainers join, with their GitHub handles after the path, for example:
+# /src/core/sim/        (owner) (physics maintainer)
+# /src/games/carrom/    (owner) (carrom maintainer)

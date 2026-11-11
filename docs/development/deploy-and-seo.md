@@ -5,7 +5,7 @@ The site is a standard Next.js app and is deployed on **Vercel**, which builds i
 ## Deploying on Vercel
 
 1. Sign in at [vercel.com](https://vercel.com) with your GitHub account and choose **Add New → Project**.
-2. Import the `sim-pool` repository. Vercel can read private repositories once you grant it access to this one.
+2. Import the `playclid` repository.
 3. Leave the detected settings alone: framework Next.js, build command `npm run build`.
 4. Add the environment variables below under **Settings → Environment Variables**, then deploy.
 

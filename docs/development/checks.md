@@ -1,6 +1,6 @@
 # Pre-commit checks
 
-`.githooks/pre-commit` runs `scripts/precommit.mjs` before every commit. `npm install` enables the hook through the `prepare` script, which sets `core.hooksPath`. The script is plain Node, so it behaves the same on Windows, macOS and Linux.
+`.githooks/pre-commit` runs `scripts/precommit.mjs` before every commit, and `.githooks/commit-msg` runs `scripts/commit-lint.mjs` on the message (see [commit messages](../../CONTRIBUTING.md#commit-messages)). Both hook files must stay executable. `npm install` enables the hook through the `prepare` script, which sets `core.hooksPath`. The script is plain Node, so it behaves the same on Windows, macOS and Linux.
 
 ## What runs, in order
 
