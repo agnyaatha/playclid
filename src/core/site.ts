@@ -2,6 +2,9 @@
 
 export const SITE_NAME = "PlayClid";
 
+/** The open-source repository, linked from the header. */
+export const REPO_URL = "https://github.com/agnyaatha/playclid";
+
 /** One sentence that works as a search snippet and a link preview. */
 export const SITE_DESCRIPTION =
   "Free snooker, pool and carrom trainer in your browser. Practise on a real physics table, follow guided drills and lessons, and take on challenges. No sign-up.";
